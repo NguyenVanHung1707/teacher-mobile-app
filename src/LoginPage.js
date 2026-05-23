@@ -1,0 +1,245 @@
+import React, { useState } from 'react'
+import { TextInput, TouchableOpacity, View, Text, KeyboardAvoidingView, StyleSheet, ActivityIndicator, Alert } from 'react-native'
+import { storeData, getData } from './Utility';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { HOST, API_URL } from '@env';
+import axios from 'axios';
+
+export default function LoginPage({ navigation }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const signIn = () => {
+    if (!username || !username.trim() || !password || !password.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng điền đầy đủ tên đăng nhập và mật khẩu!');
+      return;
+    }
+
+    console.log('Username:', username);
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+    const client_id = "graduation_thesis_ver2";
+    const client_secret = "Tj5zNU17UX9Ak1d4lLulx9VcXSSdHJwC";
+    const urlencoded = `grant_type=password&client_id=${client_id}&client_secret=${client_secret}&username=${username.trim()}&password=${password}`;
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: urlencoded,
+      redirect: "follow"
+    };
+    const tokenUrl = HOST.includes('thuvienso.io.vn')
+      ? `${HOST}/realms/hung2004/protocol/openid-connect/token`
+      : `${HOST}:9000/realms/hung2004/protocol/openid-connect/token`;
+    
+    setIsLoading(true);
+    fetch(tokenUrl, requestOptions)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
+        }
+        return response.json();
+      })
+      .then(async (data) => {
+        if (!data.access_token) {
+          throw new Error('Missing access token');
+        }
+        
+        await AsyncStorage.setItem('accessToken', data.access_token);
+        
+        // Fetch teacher profile to verify approved/pending/rejected status
+        try {
+          const config = {
+            headers: {
+              'Authorization': 'Bearer ' + data.access_token
+            }
+          };
+          const profileResponse = await axios.get(`${API_URL}/teacher/profile`, config);
+          const profileData = profileResponse.data;
+          console.log('Teacher Account Status:', profileData?.accountStatus);
+          
+          if (profileData) {
+            const status = profileData.accountStatus || 'PENDING';
+            if (status === 'PENDING' || status === 'REJECTED') {
+              navigation.replace('PendingApproval');
+            } else {
+              navigation.replace('Main');
+            }
+          } else {
+            // Fallback if profile response is empty
+            navigation.replace('Main');
+          }
+        } catch (err) {
+          console.error('Error fetching teacher profile status:', err);
+          // Fallback to Main if check fails
+          navigation.replace('Main');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        Alert.alert('Lỗi đăng nhập', 'Tên đăng nhập hoặc mật khẩu không chính xác.');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.logoZone}>
+        <Text style={styles.logoText}>Welcome</Text>
+      </View>
+      <View style={styles.signInZone}>
+        <View style={styles.inputContainer}>
+          <TextInput 
+            style={styles.textInput} 
+            placeholder="Your Email" 
+            value={username}
+            onChangeText={(val) => setUsername(val)} 
+            placeholderTextColor="#C7C7CD"
+            autoCapitalize="none"
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <TextInput 
+            style={styles.textInput} 
+            placeholder="Password" 
+            secureTextEntry={true} 
+            value={password}
+            onChangeText={(val) => setPassword(val)} 
+            placeholderTextColor="#C7C7CD"
+            autoCapitalize="none"
+          />
+        </View>
+      </View>
+      <View style={styles.bottomZone}>
+        <View style={styles.row1Bot}>
+          <View style={styles.nothing}>
+            {isLoading && <ActivityIndicator size="large" color="#8A4C7D" />}
+          </View>
+          <View style={styles.signInButtonView}>
+            <TouchableOpacity style={styles.arrowButton} onPress={() => signIn()} disabled={isLoading}>
+              <Text style={styles.arrowText}>&rarr;</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.row2Bot}>
+          <TouchableOpacity style={styles.signUp} onPress={() => navigation.navigate('SignUp')}>
+            <Text style={styles.signUpText}>Sign Up</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.nothing1}></TouchableOpacity>
+          <TouchableOpacity style={styles.forgotPassword}>
+            <Text style={styles.signUpText}>Forgot Password</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FEABAE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoZone: {
+    flex: 396,
+    justifyContent: "center",
+    width: '80%',
+    paddingLeft: 10,
+  },
+  logoText: {
+    color: "#FFFFFF",
+    fontSize: 50,
+    fontWeight: "bold",
+    fontFamily: "Futura Hv Bt",
+  },
+  signInZone: {
+    flex: 140,
+    justifyContent: "center",
+    width: '80%',
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: 10
+  },
+  inputSignIn: {
+    margin: '0 10px 0 0'
+  },
+  textInput: {
+    height: 60,
+    width: 303,
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  bottomZone: {
+    flex: 336,
+    justifyContent: "center",
+    //backgroundColor: "#4C525C",
+    width: '80%'
+  },
+  row1Bot: {
+    flex: 5,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 50
+  },
+  row2Bot: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    //
+  },
+  nothing: {
+    flex: 239,
+  },
+  signInButtonView: {
+    flex: 64,
+    borderRadius: 20,
+    marginRight: 10
+  },
+  arrowButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 64,
+    backgroundColor: '#8A4C7D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    display: 'flex',
+  },
+  arrowText: {
+    fontSize: 40,
+    color: '#fff',
+    position: 'absolute', top: -2, left: 12, right: 0, bottom: 20
+  },
+  signUp: {
+    flex: 68,
+    // backgroundColor: "#E4DB7C",
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nothing1: {
+    flex: 75,
+  },
+  forgotPassword: {
+    flex: 151,
+    //backgroundColor: "#E4DB7C",
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  signUpText: {
+    color: "#000000",
+    fontSize: 18,
+    fontWeight: "bold",
+    fontFamily: "Futura Hv Bt",
+  },
+});
+
