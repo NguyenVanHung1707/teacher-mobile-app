@@ -1,18 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet, Platform } from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  Platform,
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
-import { API_URL } from '@env';
-import { getData } from '../../Utility';
-import { convertTime, formatToDate, stringToDate, stringToTime } from '../../Utility';
+import {API_URL} from '@env';
+import {getData} from '../../Utility';
+import {
+  convertTime,
+  formatToDate,
+  stringToDate,
+  stringToTime,
+} from '../../Utility';
 
-export default function AttendanceFormModal({ visible, onClose, onSubmit }) {
+export default function AttendanceFormModal({visible, onClose, onSubmit}) {
   const [lectureNumber, setLectureNumber] = useState('');
   const currentTime = new Date();
   const hours = currentTime.getHours().toString().padStart(2, '0');
   const minutes = currentTime.getMinutes().toString().padStart(2, '0');
   const nowTime = `${hours}:${minutes}`;
-  const [attendanceDate, setAttendanceDate] = useState(formatToDate(new Date().toISOString().slice(0, 10)));
+  const [attendanceDate, setAttendanceDate] = useState(
+    formatToDate(new Date().toISOString().slice(0, 10)),
+  );
   const [attendanceHour, setAttendanceHour] = useState(nowTime);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isAttendance, setIsAttendance] = useState(true);
@@ -41,16 +56,16 @@ export default function AttendanceFormModal({ visible, onClose, onSubmit }) {
       dateWithDate.getMonth(),
       dateWithDate.getDate(),
       dateWithHour.getHours(),
-      dateWithHour.getMinutes()
+      dateWithHour.getMinutes(),
     ).toISOString(); // Chuyển đối tượng Date thành chuỗi ISO
 
     // Tạo đối tượng dữ liệu JSON với attendanceTime
     const data = JSON.stringify({
-      "lectureNumber": lectureNumber,
-      "attendanceTime": attendanceTime,
-      "isAttendance": isAttendance,
-      "courseId": currentClassId,
-      "studentId": await getData('currentStudentId')
+      lectureNumber: lectureNumber,
+      attendanceTime: attendanceTime,
+      isAttendance: isAttendance,
+      courseId: currentClassId,
+      studentId: await getData('currentStudentId'),
     });
     console.log(data);
 
@@ -60,19 +75,20 @@ export default function AttendanceFormModal({ visible, onClose, onSubmit }) {
       url: `${API_URL}/teacher/add-attendance`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + await getData('accessToken')
+        Authorization: 'Bearer ' + (await getData('accessToken')),
       },
-      data: data
+      data: data,
     };
     console.log(data);
 
-    axios.request(config)
-      .then((response) => {
+    axios
+      .request(config)
+      .then(response => {
         console.log(response.data);
         onSubmit(isAttendance); // Gọi hàm onSubmit để làm mới dữ liệu trong StudentDetail
         onClose(); // Đóng modal
       })
-      .catch((error) => {
+      .catch(error => {
         console.log(error);
       });
   };
@@ -102,8 +118,7 @@ export default function AttendanceFormModal({ visible, onClose, onSubmit }) {
       animationType="slide"
       transparent={true}
       visible={visible}
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Tạo buổi điểm danh</Text>
@@ -114,11 +129,13 @@ export default function AttendanceFormModal({ visible, onClose, onSubmit }) {
             onChangeText={setLectureNumber}
             keyboardType="numeric"
           />
-          <TouchableOpacity onPress={() => {
-            setShowDatePicker(true);
-            setIsSelectingDate(true); // Khi nhấn vào trường ngày, đặt isSelectingDate thành true
-            setIsSelectingTime(false); // Đồng thời đặt isSelectingTime thành false
-          }} style={styles.input}>
+          <TouchableOpacity
+            onPress={() => {
+              setShowDatePicker(true);
+              setIsSelectingDate(true); // Khi nhấn vào trường ngày, đặt isSelectingDate thành true
+              setIsSelectingTime(false); // Đồng thời đặt isSelectingTime thành false
+            }}
+            style={styles.input}>
             <Text>{attendanceDate}</Text>
           </TouchableOpacity>
           {Platform.OS === 'android' && showDatePicker && isSelectingDate && (
@@ -129,11 +146,13 @@ export default function AttendanceFormModal({ visible, onClose, onSubmit }) {
               onChange={onChangeDate}
             />
           )}
-          <TouchableOpacity onPress={() => {
-            setShowDatePicker(true);
-            setIsSelectingDate(false); // Khi nhấn vào trường giờ, đặt isSelectingDate thành false
-            setIsSelectingTime(true); // Đồng thời đặt isSelectingTime thành true
-          }} style={styles.input}>
+          <TouchableOpacity
+            onPress={() => {
+              setShowDatePicker(true);
+              setIsSelectingDate(false); // Khi nhấn vào trường giờ, đặt isSelectingDate thành false
+              setIsSelectingTime(true); // Đồng thời đặt isSelectingTime thành true
+            }}
+            style={styles.input}>
             <Text>{attendanceHour}</Text>
           </TouchableOpacity>
           {Platform.OS === 'android' && showDatePicker && isSelectingTime && (
@@ -145,14 +164,26 @@ export default function AttendanceFormModal({ visible, onClose, onSubmit }) {
             />
           )}
           <View style={styles.radioContainer}>
-            <TouchableOpacity onPress={() => setIsAttendance(true)} style={styles.radio}>
-              <Text style={isAttendance ? styles.radioSelected : styles.radioText}>Đi</Text>
+            <TouchableOpacity
+              onPress={() => setIsAttendance(true)}
+              style={styles.radio}>
+              <Text
+                style={isAttendance ? styles.radioSelected : styles.radioText}>
+                Đi
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setIsAttendance(false)} style={styles.radio}>
-              <Text style={!isAttendance ? styles.radioSelected : styles.radioText}>Vắng</Text>
+            <TouchableOpacity
+              onPress={() => setIsAttendance(false)}
+              style={styles.radio}>
+              <Text
+                style={!isAttendance ? styles.radioSelected : styles.radioText}>
+                Vắng
+              </Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.button} onPress={handleCreateAttendance}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleCreateAttendance}>
             <Text style={styles.buttonText}>Tạo</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={onClose}>
@@ -180,7 +211,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -190,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
     fontSize: 20,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   input: {
     width: '100%',
@@ -198,13 +229,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
-    marginBottom: 10
+    marginBottom: 10,
   },
   radioContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
-    width: '100%'
+    width: '100%',
   },
   radio: {
     flex: 1,
@@ -213,16 +244,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 10,
-    marginHorizontal: 5
+    marginHorizontal: 5,
   },
   radioText: {
     fontSize: 16,
-    color: '#000'
+    color: '#000',
   },
   radioSelected: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007BFF'
+    color: '#007BFF',
   },
   button: {
     backgroundColor: '#007BFF',
@@ -230,10 +261,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
     width: '100%',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16
-  }
+    fontSize: 16,
+  },
 });

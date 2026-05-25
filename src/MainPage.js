@@ -1,9 +1,9 @@
-import { View, Text } from 'react-native';
+import {View, Text} from 'react-native';
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import ClassManagement from './classManagement/ClassManagement';
 import ClassDetail from './classManagement/ClassDetail';
-import { createStackNavigator } from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import StudentDetail from './classManagement/StudentDetail';
 import ProfileScreen from './ProfileScreen';
 import AddFormScreen from './classManagement/AddFormScreen';
@@ -22,12 +22,36 @@ const HomeScreen = () => {
 const ClassManagementStack = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="ClassManagement" component={ClassManagement} options={{ headerShown: false }} />
-      <Stack.Screen name="ClassDetail" component={ClassDetail} options={{ headerShown: false }} />
-      <Stack.Screen name="StudentDetail" component={StudentDetail} options={{ headerShown: false }} />
-      <Stack.Screen name="AddFormScreen" component={AddFormScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ClassDiscussion" component={ClassDiscussion} options={{ headerShown: false }} />
-      <Stack.Screen name="ManagePermissions" component={ManagePermissions} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="ClassManagement"
+        component={ClassManagement}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ClassDetail"
+        component={ClassDetail}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="StudentDetail"
+        component={StudentDetail}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AddFormScreen"
+        component={AddFormScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ClassDiscussion"
+        component={ClassDiscussion}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ManagePermissions"
+        component={ManagePermissions}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -35,8 +59,8 @@ const ClassManagementStack = () => {
 export default function MainPage() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+      screenOptions={({route}) => ({
+        tabBarIcon: ({focused, color, size}) => {
           let iconName;
 
           if (route.name === 'Dashboard') {
@@ -51,8 +75,7 @@ export default function MainPage() {
         },
         tabBarActiveTintColor: 'tomato',
         tabBarInactiveTintColor: 'gray',
-      })}
-    >
+      })}>
       <Tab.Screen name="Dashboard" component={HomeScreen} />
       <Tab.Screen name="Class management" component={ClassManagementStack} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

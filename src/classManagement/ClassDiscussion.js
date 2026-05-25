@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,12 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-  SafeAreaView
+  SafeAreaView,
 } from 'react-native';
-import { API_URL } from '@env';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { getData, formatToView, convertTime } from '../Utility';
+import {getData, formatToView, convertTime} from '../Utility';
+import {API_BASE_URL, decodeJwtPayload} from '../config';
 
 export default function ClassDiscussion() {
   const [posts, setPosts] = useState([]);
@@ -25,7 +25,7 @@ export default function ClassDiscussion() {
   const [hasMore, setHasMore] = useState(true);
   const [newPostContent, setNewPostContent] = useState('');
   const [submittingPost, setSubmittingPost] = useState(false);
-  
+
   // Quản lý ô comment cho từng bài viết: { [postId]: commentText }
   const [commentInputs, setCommentInputs] = useState({});
   const [expandedComments, setExpandedComments] = useState({}); // { [postId]: boolean }
@@ -49,18 +49,10 @@ export default function ClassDiscussion() {
     try {
       const token = await getData('accessToken');
       const curClassId = await getData('currentClassId');
-      
+
       // Phân tích token để lấy claim sub (keycloakId)
       if (token) {
-        const payloadBase64 = token.split('.')[1];
-        const decodedPayload = JSON.parse(
-          decodeURIComponent(
-            atob(payloadBase64)
-              .split('')
-              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-              .join('')
-          )
-        );
+        const decodedPayload = decodeJwtPayload(token);
         setCurrentUserSub(decodedPayload.sub || '');
       }
 
@@ -81,7 +73,10 @@ export default function ClassDiscussion() {
   const connectWebSocket = (courseId, token) => {
     if (!token || !courseId) return;
 
-    let wsBase = API_URL.replace('http://', 'ws://').replace('https://', 'wss://');
+    let wsBase = API_BASE_URL.replace('http://', 'ws://').replace(
+      'https://',
+      'wss://',
+    );
     if (wsBase.endsWith('/api')) {
       wsBase = wsBase.substring(0, wsBase.length - 4);
     }
@@ -95,10 +90,10 @@ export default function ClassDiscussion() {
       console.log('Teacher WebSocket Connected successfully!');
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = event => {
       try {
         const message = JSON.parse(event.data);
-        const { type, data } = message;
+        const {type, data} = message;
         console.log('Received WebSocket event (Teacher):', type);
 
         if (type === 'NEW_POST') {
@@ -115,35 +110,37 @@ export default function ClassDiscussion() {
                 return {
                   ...post,
                   commentCount: post.commentCount + 1,
-                  comments: [...commentList, data]
+                  comments: [...commentList, data],
                 };
               }
               return post;
-            })
+            }),
           );
         } else if (type === 'DELETE_POST') {
           setPosts(prev => prev.filter(p => p.id !== data));
         } else if (type === 'DELETE_COMMENT') {
-          const { postId, commentId } = data;
+          const {postId, commentId} = data;
           setPosts(prev =>
             prev.map(post => {
               if (post.id === postId) {
-                const filtered = (post.comments || []).filter(c => c.id !== commentId);
+                const filtered = (post.comments || []).filter(
+                  c => c.id !== commentId,
+                );
                 return {
                   ...post,
                   commentCount: Math.max(0, post.commentCount - 1),
-                  comments: filtered
+                  comments: filtered,
                 };
               }
               return post;
-            })
+            }),
           );
         } else if (type === 'PIN_POST') {
-          const { postId, isPinned } = data;
+          const {postId, isPinned} = data;
           setPosts(prev => {
             const updated = prev.map(post => {
               if (post.id === postId) {
-                return { ...post, isPinned };
+                return {...post, isPinned};
               }
               return post;
             });
@@ -161,11 +158,11 @@ export default function ClassDiscussion() {
       }
     };
 
-    ws.onerror = (e) => {
+    ws.onerror = e => {
       console.log('WebSocket Error:', e.message);
     };
 
-    ws.onclose = (e) => {
+    ws.onclose = e => {
       console.log('WebSocket Connection closed:', e.code, e.reason);
       setTimeout(() => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.CLOSED) {
@@ -184,10 +181,10 @@ export default function ClassDiscussion() {
 
     try {
       const response = await axios.get(
-        `${API_URL}/discussion/courses/${courseId}/posts?page=${pageNum}&size=10`,
+        `${API_BASE_URL}/discussion/courses/${courseId}/posts?page=${pageNum}&size=10`,
         {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+          headers: {Authorization: `Bearer ${token}`},
+        },
       );
 
       const fetchedPosts = response.data.content || [];
@@ -198,7 +195,9 @@ export default function ClassDiscussion() {
       } else {
         setPosts(prev => {
           const combined = [...prev, ...fetchedPosts];
-          return combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+          return combined.filter(
+            (v, i, a) => a.findIndex(t => t.id === v.id) === i,
+          );
         });
         setPage(pageNum);
         setHasMore(fetchedPosts.length === 10);
@@ -218,17 +217,17 @@ export default function ClassDiscussion() {
 
     try {
       const response = await axios.post(
-        `${API_URL}/discussion/posts`,
+        `${API_BASE_URL}/discussion/posts`,
         {
           courseId: classId,
-          content: newPostContent.trim()
+          content: newPostContent.trim(),
         },
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
       );
 
       setPosts(prev => {
@@ -244,25 +243,25 @@ export default function ClassDiscussion() {
     }
   };
 
-  const handleCreateComment = async (postId) => {
+  const handleCreateComment = async postId => {
     const text = commentInputs[postId];
     if (!text || !text.trim()) return;
 
-    setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+    setCommentInputs(prev => ({...prev, [postId]: ''}));
 
     try {
       const response = await axios.post(
-        `${API_URL}/discussion/comments`,
+        `${API_BASE_URL}/discussion/comments`,
         {
           postId,
-          content: text.trim()
+          content: text.trim(),
         },
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
       );
 
       setPosts(prev =>
@@ -273,11 +272,11 @@ export default function ClassDiscussion() {
             return {
               ...post,
               commentCount: post.commentCount + 1,
-              comments: [...commentList, response.data]
+              comments: [...commentList, response.data],
             };
           }
           return post;
-        })
+        }),
       );
     } catch (error) {
       console.log('Error creating comment:', error);
@@ -285,21 +284,21 @@ export default function ClassDiscussion() {
     }
   };
 
-  const handlePinPost = async (postId) => {
+  const handlePinPost = async postId => {
     try {
       await axios.put(
-        `${API_URL}/discussion/posts/${postId}/pin`,
+        `${API_BASE_URL}/discussion/posts/${postId}/pin`,
         {},
         {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }
+          headers: {Authorization: `Bearer ${accessToken}`},
+        },
       );
 
       // Cập nhật trạng thái Pin trên UI lập tức
       setPosts(prev => {
         const updated = prev.map(post => {
           if (post.id === postId) {
-            return { ...post, isPinned: !post.isPinned };
+            return {...post, isPinned: !post.isPinned};
           }
           return post;
         });
@@ -316,28 +315,28 @@ export default function ClassDiscussion() {
     }
   };
 
-  const handleDeletePost = (postId) => {
+  const handleDeletePost = postId => {
     Alert.alert(
       'Xác nhận Kiểm duyệt',
       'Bạn có chắc chắn muốn xóa bài đăng này không? (Hành động này sẽ xóa toàn bộ bình luận liên quan)',
       [
-        { text: 'Hủy', style: 'cancel' },
+        {text: 'Hủy', style: 'cancel'},
         {
           text: 'Xóa bài đăng',
           style: 'destructive',
           onPress: async () => {
             try {
-              await axios.delete(`${API_URL}/discussion/posts/${postId}`, {
-                headers: { Authorization: `Bearer ${accessToken}` }
+              await axios.delete(`${API_BASE_URL}/discussion/posts/${postId}`, {
+                headers: {Authorization: `Bearer ${accessToken}`},
               });
               setPosts(prev => prev.filter(p => p.id !== postId));
             } catch (error) {
               console.log('Error deleting post:', error);
               Alert.alert('Lỗi', 'Xóa bài đăng thất bại');
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
@@ -346,46 +345,51 @@ export default function ClassDiscussion() {
       'Xác nhận Kiểm duyệt',
       'Bạn có chắc chắn muốn xóa bình luận của học sinh này không?',
       [
-        { text: 'Hủy', style: 'cancel' },
+        {text: 'Hủy', style: 'cancel'},
         {
           text: 'Xóa bình luận',
           style: 'destructive',
           onPress: async () => {
             try {
-              await axios.delete(`${API_URL}/discussion/comments/${commentId}`, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              });
+              await axios.delete(
+                `${API_BASE_URL}/discussion/comments/${commentId}`,
+                {
+                  headers: {Authorization: `Bearer ${accessToken}`},
+                },
+              );
               setPosts(prev =>
                 prev.map(post => {
                   if (post.id === postId) {
-                    const filtered = (post.comments || []).filter(c => c.id !== commentId);
+                    const filtered = (post.comments || []).filter(
+                      c => c.id !== commentId,
+                    );
                     return {
                       ...post,
                       commentCount: Math.max(0, post.commentCount - 1),
-                      comments: filtered
+                      comments: filtered,
                     };
                   }
                   return post;
-                })
+                }),
               );
             } catch (error) {
               console.log('Error deleting comment:', error);
               Alert.alert('Lỗi', 'Xóa bình luận thất bại');
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
-  const toggleComments = (postId) => {
+  const toggleComments = postId => {
     setExpandedComments(prev => ({
       ...prev,
-      [postId]: !prev[postId]
+      [postId]: !prev[postId],
     }));
   };
 
-  const renderPostItem = ({ item }) => {
+  const renderPostItem = ({item}) => {
     const isExpanded = expandedComments[item.id];
 
     return (
@@ -393,9 +397,15 @@ export default function ClassDiscussion() {
         {/* Header bài đăng */}
         <View style={styles.cardHeader}>
           <View style={styles.authorInfo}>
-            <View style={[styles.avatarPlaceholder, item.authorRole === 'Teacher' && styles.teacherAvatar]}>
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                item.authorRole === 'Teacher' && styles.teacherAvatar,
+              ]}>
               <Text style={styles.avatarText}>
-                {item.authorName ? item.authorName.charAt(0).toUpperCase() : '?'}
+                {item.authorName
+                  ? item.authorName.charAt(0).toUpperCase()
+                  : '?'}
               </Text>
             </View>
             <View style={styles.nameContainer}>
@@ -407,19 +417,23 @@ export default function ClassDiscussion() {
                   </View>
                 )}
               </View>
-              <Text style={styles.timeText}>{formatToView(convertTime(item.createdAt))}</Text>
+              <Text style={styles.timeText}>
+                {formatToView(convertTime(item.createdAt))}
+              </Text>
             </View>
           </View>
           <View style={styles.headerActions}>
             {/* Nút Ghim (Dành riêng cho giáo viên) */}
-            <TouchableOpacity onPress={() => handlePinPost(item.id)} style={{ marginRight: 16 }}>
+            <TouchableOpacity
+              onPress={() => handlePinPost(item.id)}
+              style={{marginRight: 16}}>
               <Icon
                 name="thumb-tack"
                 size={18}
                 color={item.isPinned ? '#E74C3C' : '#BDC3C7'}
               />
             </TouchableOpacity>
-            
+
             {/* Nút Xóa kiểm duyệt (Giáo viên có quyền xóa tất cả các bài viết) */}
             <TouchableOpacity onPress={() => handleDeletePost(item.id)}>
               <Icon name="trash" size={18} color="#E74C3C" />
@@ -437,9 +451,19 @@ export default function ClassDiscussion() {
             <Text style={styles.footerActionText}>Thích</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.footerActionBtn} onPress={() => toggleComments(item.id)}>
-            <Icon name="comment-o" size={16} color={isExpanded ? '#34568B' : '#7F8C8D'} />
-            <Text style={[styles.footerActionText, isExpanded && { color: '#34568B', fontWeight: 'bold' }]}>
+          <TouchableOpacity
+            style={styles.footerActionBtn}
+            onPress={() => toggleComments(item.id)}>
+            <Icon
+              name="comment-o"
+              size={16}
+              color={isExpanded ? '#34568B' : '#7F8C8D'}
+            />
+            <Text
+              style={[
+                styles.footerActionText,
+                isExpanded && {color: '#34568B', fontWeight: 'bold'},
+              ]}>
               Bình luận ({item.commentCount})
             </Text>
           </TouchableOpacity>
@@ -449,41 +473,65 @@ export default function ClassDiscussion() {
         {isExpanded && (
           <View style={styles.commentSection}>
             <View style={styles.divider} />
-            
+
             {/* Danh sách bình luận */}
             <FlatList
               data={item.comments || []}
               keyExtractor={c => c.id.toString()}
-              renderItem={({ item: comment }) => (
+              renderItem={({item: comment}) => (
                 <View style={styles.commentRow}>
-                  <View style={[styles.commentAvatar, comment.authorRole === 'Teacher' && styles.teacherAvatar]}>
+                  <View
+                    style={[
+                      styles.commentAvatar,
+                      comment.authorRole === 'Teacher' && styles.teacherAvatar,
+                    ]}>
                     <Text style={styles.commentAvatarText}>
-                      {comment.authorName ? comment.authorName.charAt(0).toUpperCase() : '?'}
+                      {comment.authorName
+                        ? comment.authorName.charAt(0).toUpperCase()
+                        : '?'}
                     </Text>
                   </View>
                   <View style={styles.commentBody}>
                     <View style={styles.commentHeader}>
                       <View style={styles.row}>
-                        <Text style={styles.commentAuthorName}>{comment.authorName}</Text>
+                        <Text style={styles.commentAuthorName}>
+                          {comment.authorName}
+                        </Text>
                         {comment.authorRole === 'Teacher' && (
                           <View style={styles.teacherCommentBadge}>
-                            <Text style={styles.teacherCommentBadgeText}>GV</Text>
+                            <Text style={styles.teacherCommentBadgeText}>
+                              GV
+                            </Text>
                           </View>
                         )}
                       </View>
                       {/* Quyền kiểm duyệt bình luận của giáo viên (Xóa bất cứ bình luận nào) */}
-                      <TouchableOpacity onPress={() => handleDeleteComment(comment.id, item.id)}>
-                        <Icon name="close" size={12} color="#E74C3C" style={{ padding: 4 }} />
+                      <TouchableOpacity
+                        onPress={() =>
+                          handleDeleteComment(comment.id, item.id)
+                        }>
+                        <Icon
+                          name="close"
+                          size={12}
+                          color="#E74C3C"
+                          style={{padding: 4}}
+                        />
                       </TouchableOpacity>
                     </View>
-                    <Text style={styles.commentContentText}>{comment.content}</Text>
-                    <Text style={styles.commentTimeText}>{formatToView(convertTime(comment.createdAt))}</Text>
+                    <Text style={styles.commentContentText}>
+                      {comment.content}
+                    </Text>
+                    <Text style={styles.commentTimeText}>
+                      {formatToView(convertTime(comment.createdAt))}
+                    </Text>
                   </View>
                 </View>
               )}
-              ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+              ItemSeparatorComponent={() => <View style={{height: 8}} />}
               ListEmptyComponent={
-                <Text style={styles.emptyCommentsText}>Chưa có bình luận nào.</Text>
+                <Text style={styles.emptyCommentsText}>
+                  Chưa có bình luận nào.
+                </Text>
               }
             />
 
@@ -494,12 +542,13 @@ export default function ClassDiscussion() {
                 placeholder="Viết câu trả lời với tư cách Giảng viên..."
                 placeholderTextColor="#95A5A6"
                 value={commentInputs[item.id] || ''}
-                onChangeText={text => setCommentInputs(prev => ({ ...prev, [item.id]: text }))}
+                onChangeText={text =>
+                  setCommentInputs(prev => ({...prev, [item.id]: text}))
+                }
               />
               <TouchableOpacity
                 style={styles.sendCommentBtn}
-                onPress={() => handleCreateComment(item.id)}
-              >
+                onPress={() => handleCreateComment(item.id)}>
                 <Icon name="send" size={14} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -518,10 +567,9 @@ export default function ClassDiscussion() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
         {/* Thanh tiêu đề Giáo viên */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Thảo luận lớp học (Giảng viên)</Text>
@@ -537,7 +585,7 @@ export default function ClassDiscussion() {
             keyExtractor={item => item.id.toString()}
             renderItem={renderPostItem}
             contentContainerStyle={styles.listContainer}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            ItemSeparatorComponent={() => <View style={{height: 12}} />}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
             onRefresh={() => fetchPosts(classId, accessToken, 0, false)}
@@ -545,7 +593,9 @@ export default function ClassDiscussion() {
             ListHeaderComponent={
               /* Hộp thông báo mới của Giảng viên */
               <View style={styles.createPostBox}>
-                <Text style={styles.createPostBoxTitle}>Tạo bài đăng/Thông báo mới</Text>
+                <Text style={styles.createPostBoxTitle}>
+                  Tạo bài đăng/Thông báo mới
+                </Text>
                 <TextInput
                   style={styles.createPostInput}
                   placeholder="Đăng thông báo, tài liệu học tập hoặc câu hỏi thảo luận..."
@@ -556,15 +606,22 @@ export default function ClassDiscussion() {
                   onChangeText={setNewPostContent}
                 />
                 <TouchableOpacity
-                  style={[styles.postSubmitBtn, !newPostContent.trim() && styles.disabledBtn]}
+                  style={[
+                    styles.postSubmitBtn,
+                    !newPostContent.trim() && styles.disabledBtn,
+                  ]}
                   onPress={handleCreatePost}
-                  disabled={submittingPost || !newPostContent.trim()}
-                >
+                  disabled={submittingPost || !newPostContent.trim()}>
                   {submittingPost ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <>
-                      <Icon name="pencil" size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Icon
+                        name="pencil"
+                        size={14}
+                        color="#FFFFFF"
+                        style={{marginRight: 6}}
+                      />
                       <Text style={styles.postSubmitBtnText}>Đăng tin</Text>
                     </>
                   )}
@@ -581,7 +638,9 @@ export default function ClassDiscussion() {
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Icon name="comments-o" size={48} color="#BDC3C7" />
-                <Text style={styles.emptyText}>Chưa có thảo luận nào trong lớp học này</Text>
+                <Text style={styles.emptyText}>
+                  Chưa có thảo luận nào trong lớp học này
+                </Text>
               </View>
             }
           />
@@ -594,7 +653,7 @@ export default function ClassDiscussion() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8F9FA'
+    backgroundColor: '#F8F9FA',
   },
   header: {
     height: 52,
@@ -603,22 +662,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
-    shadowRadius: 1
+    shadowRadius: 1,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF'
+    color: '#FFFFFF',
   },
   listContainer: {
-    padding: 12
+    padding: 12,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   createPostBox: {
     backgroundColor: '#FFFFFF',
@@ -629,15 +688,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.05,
-    shadowRadius: 3
+    shadowRadius: 3,
   },
   createPostBoxTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#34568B',
-    marginBottom: 8
+    marginBottom: 8,
   },
   createPostInput: {
     fontSize: 15,
@@ -649,7 +708,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0'
+    borderColor: '#E2E8F0',
   },
   postSubmitBtn: {
     backgroundColor: '#34568B',
@@ -659,15 +718,15 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   postSubmitBtnText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    fontSize: 14
+    fontSize: 14,
   },
   disabledBtn: {
-    backgroundColor: '#BDC3C7'
+    backgroundColor: '#BDC3C7',
   },
   postCard: {
     backgroundColor: '#FFFFFF',
@@ -677,19 +736,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.08,
-    shadowRadius: 2
+    shadowRadius: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12
+    marginBottom: 12,
   },
   authorInfo: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   avatarPlaceholder: {
     width: 40,
@@ -697,86 +756,86 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#E8F0FE',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   teacherAvatar: {
     backgroundColor: '#FADBD8',
     borderColor: '#E74C3C',
-    borderWidth: 1
+    borderWidth: 1,
   },
   avatarText: {
     color: '#34568B',
     fontWeight: 'bold',
-    fontSize: 16
+    fontSize: 16,
   },
   nameContainer: {
-    marginLeft: 10
+    marginLeft: 10,
   },
   authorNameText: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#2C3E50'
+    color: '#2C3E50',
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   teacherBadge: {
     backgroundColor: '#E74C3C',
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 1,
-    marginLeft: 6
+    marginLeft: 6,
   },
   teacherBadgeText: {
     color: '#FFFFFF',
     fontSize: 9,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   timeText: {
     fontSize: 11,
     color: '#95A5A6',
-    marginTop: 2
+    marginTop: 2,
   },
   headerActions: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   postContent: {
     fontSize: 15,
     color: '#2C3E50',
     lineHeight: 22,
     marginBottom: 16,
-    paddingHorizontal: 2
+    paddingHorizontal: 2,
   },
   cardFooter: {
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#ECF0F1',
     paddingTop: 12,
-    justifyContent: 'space-around'
+    justifyContent: 'space-around',
   },
   footerActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4
+    paddingVertical: 4,
   },
   footerActionText: {
     fontSize: 13,
     color: '#7F8C8D',
-    marginLeft: 6
+    marginLeft: 6,
   },
   commentSection: {
-    marginTop: 12
+    marginTop: 12,
   },
   divider: {
     height: 1,
     backgroundColor: '#ECF0F1',
-    marginBottom: 12
+    marginBottom: 12,
   },
   commentRow: {
     flexDirection: 'row',
-    paddingVertical: 6
+    paddingVertical: 6,
   },
   commentAvatar: {
     width: 32,
@@ -784,12 +843,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#F0F3F4',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   commentAvatarText: {
     color: '#7F8C8D',
     fontWeight: 'bold',
-    fontSize: 13
+    fontSize: 13,
   },
   commentBody: {
     flex: 1,
@@ -798,47 +857,47 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0'
+    borderColor: '#E2E8F0',
   },
   commentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4
+    marginBottom: 4,
   },
   commentAuthorName: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#2C3E50'
+    color: '#2C3E50',
   },
   teacherCommentBadge: {
     backgroundColor: '#E74C3C',
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 0.5,
-    marginLeft: 4
+    marginLeft: 4,
   },
   teacherCommentBadgeText: {
     color: '#FFFFFF',
     fontSize: 8,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   commentContentText: {
     fontSize: 13,
     color: '#34495E',
-    lineHeight: 18
+    lineHeight: 18,
   },
   commentTimeText: {
     fontSize: 9,
     color: '#BDC3C7',
     marginTop: 6,
-    alignSelf: 'flex-end'
+    alignSelf: 'flex-end',
   },
   emptyCommentsText: {
     fontSize: 13,
     color: '#95A5A6',
     textAlign: 'center',
-    marginVertical: 12
+    marginVertical: 12,
   },
   commentInputRow: {
     flexDirection: 'row',
@@ -850,13 +909,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     paddingLeft: 12,
     paddingRight: 4,
-    height: 40
+    height: 40,
   },
   commentTextInput: {
     flex: 1,
     fontSize: 13,
     color: '#2C3E50',
-    paddingVertical: 0
+    paddingVertical: 0,
   },
   sendCommentBtn: {
     backgroundColor: '#34568B',
@@ -864,21 +923,21 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   footerLoader: {
     paddingVertical: 12,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40
+    paddingVertical: 40,
   },
   emptyText: {
     fontSize: 14,
     color: '#95A5A6',
     marginTop: 10,
-    textAlign: 'center'
-  }
+    textAlign: 'center',
+  },
 });

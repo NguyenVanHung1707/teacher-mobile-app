@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, Switch } from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Switch,
+} from 'react-native';
 
-const QuestionModal = ({ modalVisible, setModalVisible, question, setQuestion, answers, setAnswers, handleAddQuestion }) => {
+const QuestionModal = ({
+  modalVisible,
+  setModalVisible,
+  question,
+  setQuestion,
+  answers,
+  setAnswers,
+  handleAddQuestion,
+}) => {
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
 
   const addAnswer = () => {
     if (currentAnswer.trim() !== '') {
-      setAnswers([...answers, { text: currentAnswer, correct: isCorrect }]);
+      setAnswers([...answers, {text: currentAnswer, correct: isCorrect}]);
       setCurrentAnswer('');
       setIsCorrect(false);
     }
   };
 
-  const toggleCorrectness = (index) => {
+  const toggleCorrectness = index => {
     const newAnswers = [...answers];
     newAnswers[index].correct = !newAnswers[index].correct;
     setAnswers(newAnswers);
@@ -24,8 +40,7 @@ const QuestionModal = ({ modalVisible, setModalVisible, question, setQuestion, a
       transparent={true}
       animationType="slide"
       visible={modalVisible}
-      onRequestClose={() => setModalVisible(false)}
-    >
+      onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Thêm câu hỏi</Text>
@@ -43,10 +58,7 @@ const QuestionModal = ({ modalVisible, setModalVisible, question, setQuestion, a
           />
           <View style={styles.switchContainer}>
             <Text>Đúng</Text>
-            <Switch
-              value={isCorrect}
-              onValueChange={setIsCorrect}
-            />
+            <Switch value={isCorrect} onValueChange={setIsCorrect} />
           </View>
           <TouchableOpacity style={styles.addButton} onPress={addAnswer}>
             <Text style={styles.addButtonText}>Thêm câu trả lời</Text>
@@ -65,7 +77,9 @@ const QuestionModal = ({ modalVisible, setModalVisible, question, setQuestion, a
             <TouchableOpacity style={styles.button} onPress={handleAddQuestion}>
               <Text style={styles.buttonText}>Thêm câu hỏi</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => setModalVisible(false)}>
               <Text style={styles.buttonText}>Hủy</Text>
             </TouchableOpacity>
           </View>

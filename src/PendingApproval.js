@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, useColorScheme } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  useColorScheme,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '@env';
+import {API_URL} from '@env';
 import axios from 'axios';
-import { getData, getThemeColors } from './Utility';
+import {getData, getThemeColors} from './Utility';
 
-export default function PendingApproval({ navigation }) {
+export default function PendingApproval({navigation}) {
   const [status, setStatus] = useState('PENDING'); // PENDING or REJECTED
   const [rejectionReason, setRejectionReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -21,8 +29,8 @@ export default function PendingApproval({ navigation }) {
 
       const config = {
         headers: {
-          'Authorization': 'Bearer ' + token
-        }
+          Authorization: 'Bearer ' + token,
+        },
       };
 
       const response = await axios.get(`${API_URL}/teacher/profile`, config);
@@ -33,7 +41,10 @@ export default function PendingApproval({ navigation }) {
         setRejectionReason(data.rejectionReason || '');
 
         if (data.accountStatus === 'APPROVED') {
-          Alert.alert('Thành công', 'Tài khoản của bạn đã được phê duyệt! Đang chuyển hướng...');
+          Alert.alert(
+            'Thành công',
+            'Tài khoản của bạn đã được phê duyệt! Đang chuyển hướng...',
+          );
           navigation.replace('Main');
         }
       }
@@ -65,12 +76,19 @@ export default function PendingApproval({ navigation }) {
   const isRejected = status === 'REJECTED';
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+    <View style={[styles.container, {backgroundColor: theme.bg}]}>
       <View style={styles.logoZone}>
         <Text style={styles.logoText}>Trạng thái</Text>
-        <Text style={[styles.subLogoText, { color: isDark ? '#F472B6' : '#8A4C7D' }]}>Tài khoản</Text>
-        
-        <View style={[styles.statusBanner, isRejected ? styles.rejectedBanner : styles.pendingBanner]}>
+        <Text
+          style={[styles.subLogoText, {color: isDark ? '#F472B6' : '#8A4C7D'}]}>
+          Tài khoản
+        </Text>
+
+        <View
+          style={[
+            styles.statusBanner,
+            isRejected ? styles.rejectedBanner : styles.pendingBanner,
+          ]}>
           <Text style={styles.statusBannerText}>
             {isRejected ? 'BỊ TỪ CHỐI PHÊ DUYỆT' : 'ĐANG CHỜ PHÊ DUYỆT'}
           </Text>
@@ -83,7 +101,14 @@ export default function PendingApproval({ navigation }) {
         </Text>
 
         {isRejected && rejectionReason ? (
-          <View style={[styles.reasonContainer, isDark && { backgroundColor: 'rgba(30, 41, 59, 0.5)', borderColor: '#D14343' }]}>
+          <View
+            style={[
+              styles.reasonContainer,
+              isDark && {
+                backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                borderColor: '#D14343',
+              },
+            ]}>
             <Text style={styles.reasonTitle}>Lý do từ chối:</Text>
             <Text style={styles.reasonText}>{rejectionReason}</Text>
           </View>
@@ -91,20 +116,27 @@ export default function PendingApproval({ navigation }) {
       </View>
 
       <View style={styles.bottomZone}>
-        <TouchableOpacity 
-          style={[styles.refreshButton, isLoading && styles.disabledButton]} 
+        <TouchableOpacity
+          style={[styles.refreshButton, isLoading && styles.disabledButton]}
           onPress={checkStatus}
-          disabled={isLoading}
-        >
+          disabled={isLoading}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#8A4C7D" />
           ) : (
-            <Text style={styles.refreshButtonText}>KIỂM TRA LẠI TRẠNG THÁI</Text>
+            <Text style={styles.refreshButtonText}>
+              KIỂM TRA LẠI TRẠNG THÁI
+            </Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={[styles.logoutButtonText, { color: isDark ? '#F472B6' : '#8A4C7D' }]}>Đăng xuất</Text>
+          <Text
+            style={[
+              styles.logoutButtonText,
+              {color: isDark ? '#F472B6' : '#8A4C7D'},
+            ]}>
+            Đăng xuất
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -114,28 +146,28 @@ export default function PendingApproval({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FEABAE",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#FEABAE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoZone: {
     flex: 6,
-    justifyContent: "center",
+    justifyContent: 'center',
     width: '80%',
     paddingLeft: 10,
     marginTop: 50,
   },
   logoText: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 40,
-    fontWeight: "bold",
-    fontFamily: "Futura Hv Bt",
+    fontWeight: 'bold',
+    fontFamily: 'Futura Hv Bt',
   },
   subLogoText: {
-    color: "#8A4C7D",
+    color: '#8A4C7D',
     fontSize: 32,
-    fontWeight: "bold",
-    fontFamily: "Futura Hv Bt",
+    fontWeight: 'bold',
+    fontFamily: 'Futura Hv Bt',
     marginTop: -5,
   },
   statusBanner: {
@@ -158,7 +190,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   description: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 15,
     marginTop: 20,
     lineHeight: 22,
@@ -187,7 +219,7 @@ const styles = StyleSheet.create({
   },
   bottomZone: {
     flex: 4,
-    justifyContent: "center",
+    justifyContent: 'center',
     width: '80%',
   },
   refreshButton: {
@@ -198,7 +230,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 3,
@@ -222,6 +254,6 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: '#8A4C7D',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });

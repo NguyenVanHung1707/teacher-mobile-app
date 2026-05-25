@@ -1,12 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, FlatList, Alert, TextInput, ActivityIndicator } from 'react-native';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import CheckBox from '@react-native-community/checkbox';
 import axios from 'axios';
-import { HOST, API_URL } from '@env';
-import { getData } from '../../Utility';
+import {API_URL} from '@env';
+import {getData} from '../../Utility';
+import {DETECT_FACE_ATTENDANCE_ENDPOINT} from '../../config';
 
-const ImageModal = ({ visible, onClose, studentList }) => {
+const ImageModal = ({visible, onClose, studentList}) => {
   const [imageUri, setImageUri] = useState(null);
   const [imageName, setImageName] = useState(null);
   const [imageType, setImageType] = useState(null);
@@ -27,7 +39,7 @@ const ImageModal = ({ visible, onClose, studentList }) => {
   }, [visible]);
 
   const handleCapturePhoto = () => {
-    launchCamera({ mediaType: 'photo' }, (response) => {
+    launchCamera({mediaType: 'photo'}, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.errorCode) {
@@ -42,7 +54,7 @@ const ImageModal = ({ visible, onClose, studentList }) => {
   };
 
   const handleSelectPhoto = () => {
-    launchImageLibrary({ mediaType: 'photo' }, (response) => {
+    launchImageLibrary({mediaType: 'photo'}, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.errorCode) {
@@ -76,31 +88,32 @@ const ImageModal = ({ visible, onClose, studentList }) => {
       });
 
       const myHeaders = new Headers();
-      myHeaders.append("accept", "application/json");
+      myHeaders.append('accept', 'application/json');
 
       const requestOptions = {
-        method: "POST",
+        method: 'POST',
         headers: myHeaders,
         body: formData,
-        redirect: "follow"
+        redirect: 'follow',
       };
 
       setIsLoading(true); // Bắt đầu hiển thị loading
-      fetch(`${HOST}:8888/attendance`, requestOptions)
-        .then((response) => response.json())
-        .then((result) => {
+      fetch(DETECT_FACE_ATTENDANCE_ENDPOINT, requestOptions)
+        .then(response => response.json())
+        .then(result => {
           console.log(result);
           setAttendanceResult(result);
           const updatedStudentResults = studentList.map(student => ({
             id: student.id,
             name: student.name,
             studentCode: student.studentCode,
-            result: result.find(r => r.id === student.id)?.isAttendance ?? 'Không rõ',
+            result:
+              result.find(r => r.id === student.id)?.isAttendance ?? 'Không rõ',
           }));
           setStudentResults(updatedStudentResults);
           setShowSavePrompt(true);
         })
-        .catch((error) => {
+        .catch(error => {
           console.error(error);
           Alert.alert('Đã xảy ra lỗi khi điểm danh');
         })
@@ -112,15 +125,17 @@ const ImageModal = ({ visible, onClose, studentList }) => {
 
   const handleSaveResult = async () => {
     const attendanceTime = new Date().toISOString();
-    const filteredStudentResults = studentResults.filter(studentResult => studentResult.result !== 'Không rõ');
+    const filteredStudentResults = studentResults.filter(
+      studentResult => studentResult.result !== 'Không rõ',
+    );
 
-    await filteredStudentResults.forEach(async (studentResult) => {
+    await filteredStudentResults.forEach(async studentResult => {
       const data = JSON.stringify({
-        "lectureNumber": lectureNumber,
-        "attendanceTime": attendanceTime,
-        "isAttendance": studentResult.result,
-        "courseId": await getData('currentClassId'),
-        "studentId": studentResult.id
+        lectureNumber: lectureNumber,
+        attendanceTime: attendanceTime,
+        isAttendance: studentResult.result,
+        courseId: await getData('currentClassId'),
+        studentId: studentResult.id,
       });
       let config = {
         method: 'post',
@@ -128,15 +143,16 @@ const ImageModal = ({ visible, onClose, studentList }) => {
         url: `${API_URL}/teacher/add-attendance`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + await getData('accessToken')
+          Authorization: 'Bearer ' + (await getData('accessToken')),
         },
-        data: data
+        data: data,
       };
-      axios.request(config)
-        .then((response) => {
+      axios
+        .request(config)
+        .then(response => {
           console.log(response.data);
         })
-        .catch((error) => {
+        .catch(error => {
           console.log(error);
           Alert.alert('Đã xảy ra lỗi khi lưu điểm danh');
         });
@@ -145,23 +161,24 @@ const ImageModal = ({ visible, onClose, studentList }) => {
     setShowSavePrompt(false);
   };
 
-  const toggleStudentSelection = (studentId) => {
-    setSelectedStudents((prevSelected) => {
+  const toggleStudentSelection = studentId => {
+    setSelectedStudents(prevSelected => {
       if (prevSelected.includes(studentId)) {
-        return prevSelected.filter((id) => id !== studentId);
+        return prevSelected.filter(id => id !== studentId);
       } else {
         return [...prevSelected, studentId];
       }
     });
   };
 
-  const renderStudentItem = ({ item }) => (
+  const renderStudentItem = ({item}) => (
     <View style={styles.studentItem}>
       <CheckBox
         value={selectedStudents.includes(item.id)}
         onValueChange={() => toggleStudentSelection(item.id)}
       />
-      <Text style={styles.studentText}>{`${item.name} (${item.studentCode})`}</Text>
+      <Text
+        style={styles.studentText}>{`${item.name} (${item.studentCode})`}</Text>
     </View>
   );
 
@@ -172,18 +189,22 @@ const ImageModal = ({ visible, onClose, studentList }) => {
           <Text style={styles.modalTitle}>Chụp ảnh điểm danh</Text>
           {imageUri ? (
             <View style={styles.resultModalContent}>
-              <Image source={{ uri: imageUri }} style={styles.capturedImage} />
+              <Image source={{uri: imageUri}} style={styles.capturedImage} />
               <FlatList
                 data={studentList}
                 renderItem={renderStudentItem}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={item => item.id.toString()}
                 style={styles.flatList}
               />
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={[styles.button, styles.equalButton]} onPress={confirmAttendance}>
+                <TouchableOpacity
+                  style={[styles.button, styles.equalButton]}
+                  onPress={confirmAttendance}>
                   <Text style={styles.buttonText}>Điểm Danh</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, styles.equalButton, styles.backButton]} onPress={() => setImageUri(null)}>
+                <TouchableOpacity
+                  style={[styles.button, styles.equalButton, styles.backButton]}
+                  onPress={() => setImageUri(null)}>
                   <Text style={styles.buttonText}>Quay lại</Text>
                 </TouchableOpacity>
               </View>
@@ -193,24 +214,32 @@ const ImageModal = ({ visible, onClose, studentList }) => {
                   style={styles.input}
                   keyboardType="numeric"
                   value={lectureNumber.toString()}
-                  onChangeText={(text) => setLectureNumber(parseInt(text) || '')}
+                  onChangeText={text => setLectureNumber(parseInt(text) || '')}
                 />
               </View>
-              <TouchableOpacity style={[styles.closeButton, { backgroundColor: 'red' }]} onPress={onClose}>
+              <TouchableOpacity
+                style={[styles.closeButton, {backgroundColor: 'red'}]}
+                onPress={onClose}>
                 <Text style={styles.buttonText}>Đóng</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <>
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.buttonContainer} onPress={handleCapturePhoto}>
+                <TouchableOpacity
+                  style={styles.buttonContainer}
+                  onPress={handleCapturePhoto}>
                   <Text style={styles.buttonText}>Bắt Đầu Chụp</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.buttonContainer} onPress={handleSelectPhoto}>
+                <TouchableOpacity
+                  style={styles.buttonContainer}
+                  onPress={handleSelectPhoto}>
                   <Text style={styles.buttonText}>Chọn Ảnh Thư Viện</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity style={[styles.closeButton, { backgroundColor: 'red' }]} onPress={onClose}>
+              <TouchableOpacity
+                style={[styles.closeButton, {backgroundColor: 'red'}]}
+                onPress={onClose}>
                 <Text style={styles.buttonText}>Đóng</Text>
               </TouchableOpacity>
             </>
@@ -226,20 +255,27 @@ const ImageModal = ({ visible, onClose, studentList }) => {
         <View style={styles.savePromptContainer}>
           <Text style={styles.savePromptText}>Kết quả điểm danh:</Text>
           <View>
-            {studentResults.map((studentResult) => (
-              studentResult.result !== 'Không rõ' && (
-                <Text key={studentResult.id} style={styles.studentResultText}>
-                  {`${studentResult.name} (${studentResult.studentCode}): ${studentResult.result ? 'Đi' : 'Vắng'}`}
-                </Text>
-              )
-            ))}
+            {studentResults.map(
+              studentResult =>
+                studentResult.result !== 'Không rõ' && (
+                  <Text key={studentResult.id} style={styles.studentResultText}>
+                    {`${studentResult.name} (${studentResult.studentCode}): ${
+                      studentResult.result ? 'Đi' : 'Vắng'
+                    }`}
+                  </Text>
+                ),
+            )}
           </View>
 
           <View style={styles.savePromptButtonRow}>
-            <TouchableOpacity style={[styles.savePromptButton, { backgroundColor: '#2196F3' }]} onPress={handleSaveResult}>
+            <TouchableOpacity
+              style={[styles.savePromptButton, {backgroundColor: '#2196F3'}]}
+              onPress={handleSaveResult}>
               <Text style={styles.savePromptButtonText}>Lưu</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.savePromptButton, { backgroundColor: '#FFA500' }]} onPress={() => setShowSavePrompt(false)}>
+            <TouchableOpacity
+              style={[styles.savePromptButton, {backgroundColor: '#FFA500'}]}
+              onPress={() => setShowSavePrompt(false)}>
               <Text style={styles.savePromptButtonText}>Không</Text>
             </TouchableOpacity>
           </View>

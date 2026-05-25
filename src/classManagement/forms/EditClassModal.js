@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+} from 'react-native';
 
-export default function EditClassModal({ visible, onClose, onSubmit, currentCourseCode, currentSubject, currentDescription }) {
+export default function EditClassModal({
+  visible,
+  onClose,
+  onSubmit,
+  currentCourseCode,
+  currentSubject,
+  currentDescription,
+}) {
   const [courseCode, setCourseCode] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -24,8 +38,7 @@ export default function EditClassModal({ visible, onClose, onSubmit, currentCour
       transparent={true}
       animationType="slide"
       visible={visible}
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Sửa Lớp</Text>
@@ -51,7 +64,9 @@ export default function EditClassModal({ visible, onClose, onSubmit, currentCour
             <TouchableOpacity style={styles.button} onPress={handleSave}>
               <Text style={styles.buttonText}>Lưu</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}>
               <Text style={styles.buttonText}>Hủy</Text>
             </TouchableOpacity>
           </View>

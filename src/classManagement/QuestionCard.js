@@ -1,15 +1,21 @@
 import React from 'react';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import {Text, View, TouchableOpacity, StyleSheet} from 'react-native';
 
-export default function QuestionCard({ questionInfo, onPress, onLongPress }) {
+export default function QuestionCard({questionInfo, onPress, onLongPress}) {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} onLongPress={onLongPress}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      onLongPress={onLongPress}>
       <View style={styles.questionInfoContainer}>
-        <Text style={styles.question}>{`Câu hỏi: ${questionInfo.question}`}</Text>
+        <Text
+          style={styles.question}>{`Câu hỏi: ${questionInfo.question}`}</Text>
         {questionInfo.answers.map((answer, index) => (
           <View key={index} style={styles.answerItemContainer}>
             <Text style={styles.answer}>{`Câu trả lời: ${answer.text}`}</Text>
-            <Text style={styles.correctText}>{answer.correct ? 'Đúng' : 'Sai'}</Text>
+            <Text style={styles.correctText}>
+              {answer.correct ? 'Đúng' : 'Sai'}
+            </Text>
           </View>
         ))}
       </View>

@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, {useState} from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 
-export default function AddClassModal({ visible, onClose, onSubmit }) {
+export default function AddClassModal({visible, onClose, onSubmit}) {
   const [courseCode, setCourseCode] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -12,7 +19,7 @@ export default function AddClassModal({ visible, onClose, onSubmit }) {
       alert('Vui lòng nhập đầy đủ thông tin mã lớp và môn học');
       return;
     }
-    onSubmit( courseCode, subject, description );
+    onSubmit(courseCode, subject, description);
     setCourseCode('');
     setSubject('');
     setDescription('');
@@ -47,7 +54,9 @@ export default function AddClassModal({ visible, onClose, onSubmit }) {
             <TouchableOpacity style={styles.button} onPress={handleAddClass}>
               <Text style={styles.buttonText}>Xác nhận</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}>
               <Text style={styles.buttonText}>Hủy</Text>
             </TouchableOpacity>
           </View>

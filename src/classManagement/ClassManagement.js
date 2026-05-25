@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, {useState, useEffect, useCallback} from 'react';
+import {View, Text, FlatList, TouchableOpacity, StyleSheet} from 'react-native';
 import axios from 'axios';
-import { API_URL } from '@env';
+import {API_URL} from '@env';
 import ClassCard from './ClassCard';
 import AddClassModal from './forms/AddClassModal';
-import { getData } from '../Utility';
-import { useFocusEffect } from '@react-navigation/native';
+import {getData} from '../Utility';
+import {useFocusEffect} from '@react-navigation/native';
 
 export default function ClassManagement() {
   const [classes, setClasses] = useState([]);
@@ -17,14 +17,15 @@ export default function ClassManagement() {
       maxBodyLength: Infinity,
       url: `${API_URL}/teacher/get-my-courses`,
       headers: {
-        'Authorization': 'Bearer ' + await getData('accessToken')
-      }
+        Authorization: 'Bearer ' + (await getData('accessToken')),
+      },
     };
-    axios.request(config)
-      .then((response) => {
+    axios
+      .request(config)
+      .then(response => {
         setClasses(response.data);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error(error);
       });
   };
@@ -36,7 +37,7 @@ export default function ClassManagement() {
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [])
+    }, []),
   );
 
   const addCourse = () => {
@@ -44,11 +45,11 @@ export default function ClassManagement() {
   };
 
   const handleAddClass = async (courseCode, subject, description) => {
-    console.log("aloooooo")
+    console.log('aloooooo');
     let data = JSON.stringify({
-      "courseCode": courseCode,
-      "subject": subject,
-      "description": description
+      courseCode: courseCode,
+      subject: subject,
+      description: description,
     });
 
     let config = {
@@ -57,18 +58,19 @@ export default function ClassManagement() {
       url: `${API_URL}/teacher/create-course`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + await getData('accessToken')
+        Authorization: 'Bearer ' + (await getData('accessToken')),
       },
-      data: data
+      data: data,
     };
 
-    axios.request(config)
-      .then((response) => {
+    axios
+      .request(config)
+      .then(response => {
         console.log(JSON.stringify(response.data));
         console.log(response.status);
         fetchData(); // Reload the class list after adding a new class
       })
-      .catch((error) => {
+      .catch(error => {
         console.log(error);
       });
   };
@@ -86,9 +88,9 @@ export default function ClassManagement() {
       <View style={styles.classList}>
         <FlatList
           data={classes}
-          renderItem={({ item }) => <ClassCard classInfo={item} />}
-          keyExtractor={(item) => item.id.toString()}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+          renderItem={({item}) => <ClassCard classInfo={item} />}
+          keyExtractor={item => item.id.toString()}
+          ItemSeparatorComponent={() => <View style={{height: 10}} />}
         />
       </View>
       <AddClassModal
@@ -103,19 +105,19 @@ export default function ClassManagement() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#ECF0F1',
   },
   text1: {
     fontSize: 24,
     fontWeight: 'bold',
-    position: 'absolute'
+    position: 'absolute',
   },
   classList: {
     flex: 10,
-    width: "100%",
-    padding: 15
+    width: '100%',
+    padding: 15,
   },
   activeBar: {
     backgroundColor: '#ECF0F1',

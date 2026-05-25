@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react-native';
+import {render, fireEvent, act} from '@testing-library/react-native';
 import PendingApproval from '../src/PendingApproval';
 import axios from 'axios';
-import { Alert } from 'react-native';
+import {Alert} from 'react-native';
 
 const alertSpy = jest.spyOn(Alert, 'alert');
 
@@ -13,16 +13,21 @@ describe('PendingApproval Screen', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    await require('@react-native-async-storage/async-storage').setItem('accessToken', 'fake-token');
+    await require('@react-native-async-storage/async-storage').setItem(
+      'accessToken',
+      'fake-token',
+    );
   });
 
   it('initially re-checks status and shows PENDING view', async () => {
     // Mock the backend returning PENDING
     axios.get.mockResolvedValueOnce({
-      data: { accountStatus: 'PENDING', rejectionReason: '' }
+      data: {accountStatus: 'PENDING', rejectionReason: ''},
     });
 
-    const { getByText, queryByText } = render(<PendingApproval navigation={mockNavigation} />);
+    const {getByText, queryByText} = render(
+      <PendingApproval navigation={mockNavigation} />,
+    );
 
     await act(async () => {
       await Promise.resolve();
@@ -30,16 +35,23 @@ describe('PendingApproval Screen', () => {
 
     expect(axios.get).toHaveBeenCalled();
     expect(getByText('ĐANG CHỜ PHÊ DUYỆT')).toBeTruthy();
-    expect(getByText('Tài khoản của bạn đang được quản trị viên xem xét và phê duyệt. Vui lòng quay lại sau.')).toBeTruthy();
+    expect(
+      getByText(
+        'Tài khoản của bạn đang được quản trị viên xem xét và phê duyệt. Vui lòng quay lại sau.',
+      ),
+    ).toBeTruthy();
     expect(queryByText('Lý do từ chối:')).toBeNull();
   });
 
   it('shows REJECTED view and rejection reason when backend status is REJECTED', async () => {
     axios.get.mockResolvedValueOnce({
-      data: { accountStatus: 'REJECTED', rejectionReason: 'Thiếu chứng chỉ giảng dạy hợp lệ!' }
+      data: {
+        accountStatus: 'REJECTED',
+        rejectionReason: 'Thiếu chứng chỉ giảng dạy hợp lệ!',
+      },
     });
 
-    const { getByText } = render(<PendingApproval navigation={mockNavigation} />);
+    const {getByText} = render(<PendingApproval navigation={mockNavigation} />);
 
     await act(async () => {
       await Promise.resolve();
@@ -52,7 +64,7 @@ describe('PendingApproval Screen', () => {
 
   it('alerts and redirects to Main when accountStatus is APPROVED', async () => {
     axios.get.mockResolvedValueOnce({
-      data: { accountStatus: 'APPROVED', rejectionReason: '' }
+      data: {accountStatus: 'APPROVED', rejectionReason: ''},
     });
 
     render(<PendingApproval navigation={mockNavigation} />);
@@ -63,7 +75,7 @@ describe('PendingApproval Screen', () => {
 
     expect(alertSpy).toHaveBeenCalledWith(
       'Thành công',
-      'Tài khoản của bạn đã được phê duyệt! Đang chuyển hướng...'
+      'Tài khoản của bạn đã được phê duyệt! Đang chuyển hướng...',
     );
     expect(mockNavigation.replace).toHaveBeenCalledWith('Main');
   });
@@ -71,10 +83,10 @@ describe('PendingApproval Screen', () => {
   it('allows manual refresh clicking the button', async () => {
     // 1st request on mount (PENDING)
     axios.get.mockResolvedValueOnce({
-      data: { accountStatus: 'PENDING', rejectionReason: '' }
+      data: {accountStatus: 'PENDING', rejectionReason: ''},
     });
 
-    const { getByText } = render(<PendingApproval navigation={mockNavigation} />);
+    const {getByText} = render(<PendingApproval navigation={mockNavigation} />);
 
     await act(async () => {
       await Promise.resolve();
@@ -82,7 +94,7 @@ describe('PendingApproval Screen', () => {
 
     // 2nd request on press (now APPROVED)
     axios.get.mockResolvedValueOnce({
-      data: { accountStatus: 'APPROVED', rejectionReason: '' }
+      data: {accountStatus: 'APPROVED', rejectionReason: ''},
     });
 
     const refreshButton = getByText('KIỂM TRA LẠI TRẠNG THÁI');

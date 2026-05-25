@@ -1,23 +1,26 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {Modal, View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
-const ConfirmDeleteStudentModal = ({ visible, onClose, onConfirm }) => {
+const ConfirmDeleteStudentModal = ({visible, onClose, onConfirm}) => {
   return (
     <Modal
       visible={visible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Xác nhận xóa sinh viên</Text>
-          <Text style={styles.modalText}>Bạn có chắc muốn xóa sinh viên khỏi lớp không?</Text>
+          <Text style={styles.modalText}>
+            Bạn có chắc muốn xóa sinh viên khỏi lớp không?
+          </Text>
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.button} onPress={onConfirm}>
               <Text style={styles.buttonText}>Xóa</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}>
               <Text style={styles.buttonText}>Hủy</Text>
             </TouchableOpacity>
           </View>

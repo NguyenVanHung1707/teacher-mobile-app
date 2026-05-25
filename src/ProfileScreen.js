@@ -1,19 +1,23 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import {View, Text, Image, StyleSheet} from 'react-native';
 
 const ProfileScreen = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: 'https://www.bootdey.com/image/900x400/FF7F50/000000' }}
+        source={{uri: 'https://www.bootdey.com/image/900x400/FF7F50/000000'}}
         style={styles.coverImage}
       />
       <View style={styles.avatarContainer}>
         <Image
-          source={{ uri: 'https://www.bootdey.com/img/Content/avatar/avatar1.png' }}
+          source={{
+            uri: 'https://www.bootdey.com/img/Content/avatar/avatar1.png',
+          }}
           style={styles.avatar}
         />
-        <Text style={[styles.name, styles.textWithShadow]}>Nguyen Van Nam - 20200421</Text>
+        <Text style={[styles.name, styles.textWithShadow]}>
+          Nguyen Van Nam - 20200421
+        </Text>
       </View>
       <View style={styles.content}>
         <View style={styles.infoContainer}>
@@ -59,7 +63,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginTop: 10,
-    color: 'white'
+    color: 'white',
   },
   content: {
     marginTop: 20,

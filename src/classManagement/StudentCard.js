@@ -1,21 +1,27 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import React from 'react'
-import { useNavigation } from '@react-navigation/native'
-import { getData, storeData } from '../Utility'
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import React from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {getData, storeData} from '../Utility';
 
 export default function StudentCard(props) {
-  const { student } = props
-  const navigation = useNavigation()
+  const {student} = props;
+  const navigation = useNavigation();
   const onPress = async () => {
-    console.log(`You pressed ${student.studentCode}`)
-    await storeData('currentStudentId', student.id.toString())
-    await storeData('currentStudentCode', student.studentCode)
-    await storeData('currentStudentName', student.name)
-    await storeData('currentStudentNumberOfAbsent', student.numberOfAbsent.toString())
-    await storeData('currentStudentNumberOfPresent', student.numberOfPresent.toString())
-    console.log('currentStudentId: ' + await getData('currentStudentId'))
-    navigation.navigate('StudentDetail', { studentCode: student.studentCode })
-  }
+    console.log(`You pressed ${student.studentCode}`);
+    await storeData('currentStudentId', student.id.toString());
+    await storeData('currentStudentCode', student.studentCode);
+    await storeData('currentStudentName', student.name);
+    await storeData(
+      'currentStudentNumberOfAbsent',
+      student.numberOfAbsent.toString(),
+    );
+    await storeData(
+      'currentStudentNumberOfPresent',
+      student.numberOfPresent.toString(),
+    );
+    console.log('currentStudentId: ' + (await getData('currentStudentId')));
+    navigation.navigate('StudentDetail', {studentCode: student.studentCode});
+  };
   return (
     <View>
       <TouchableOpacity style={styles.button} onPress={onPress}>
@@ -39,61 +45,61 @@ export default function StudentCard(props) {
         </View>
       </TouchableOpacity>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingLeft: 10,
-        paddingTop: 10,
-        paddingBottom: 10,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        backgroundColor: '#00ff99',
-        borderRadius: 10,
-    },
-    studentInfoContainer: {
-        backgroundColor: '#fff',
-        padding: 15,
-        borderRadius: 10,
-    },
-    studentCodeLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    studentCodeValue: {
-        fontSize: 16,
-    },
-    nameLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    nameValue: {
-        fontSize: 16,
-    },
-    absentLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    absentValue: {
-        fontSize: 16,
-        color: 'red', // Highlight absent value in red
-    },
-    presentLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    presentValue: {
-        fontSize: 16,
-        color: 'green', // Highlight present value in green
-    },
-    infoRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between', // Can adjust as needed
-    },
+  container: {
+    flex: 1,
+    paddingLeft: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#00ff99',
+    borderRadius: 10,
+  },
+  studentInfoContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+  },
+  studentCodeLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  studentCodeValue: {
+    fontSize: 16,
+  },
+  nameLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  nameValue: {
+    fontSize: 16,
+  },
+  absentLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  absentValue: {
+    fontSize: 16,
+    color: 'red', // Highlight absent value in red
+  },
+  presentLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  presentValue: {
+    fontSize: 16,
+    color: 'green', // Highlight present value in green
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', // Can adjust as needed
+  },
 });

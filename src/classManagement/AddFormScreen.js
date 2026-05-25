@@ -1,14 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, Platform, PermissionsAndroid, ActivityIndicator } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+  ActivityIndicator,
+} from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import QuestionModal from './forms/QuestionModal';
 import QuestionCard from './QuestionCard';
 import UpdateQuestionModal from './forms/UpdateQuestionModal';
-import { getData } from '../Utility';
+import {getData} from '../Utility';
 import axios from 'axios';
-import { API_URL } from '@env';
+import {API_URL} from '@env';
 
-const AddFormScreen = ({ navigation }) => {
+const AddFormScreen = ({navigation}) => {
   const [hours, setHours] = useState('0');
   const [minutes, setMinutes] = useState('5');
   const [question, setQuestion] = useState('');
@@ -27,32 +38,39 @@ const AddFormScreen = ({ navigation }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const inverseQuestionsDTO = (questionsDTO) => {
+  const inverseQuestionsDTO = questionsDTO => {
     return questionsDTO.map(question => ({
       question: question.content,
       answers: question.answers.map(answer => ({
         text: answer.content,
-        correct: answer.isTrue
-      }))
+        correct: answer.isTrue,
+      })),
     }));
   };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${API_URL}/teacher/get-form-by-course?courseId=${await getData('currentClassId')}`, {
-          headers: {
-            'Authorization': 'Bearer ' + await getData('accessToken'),
-          }
-        });
+        const response = await axios.get(
+          `${API_URL}/teacher/get-form-by-course?courseId=${await getData(
+            'currentClassId',
+          )}`,
+          {
+            headers: {
+              Authorization: 'Bearer ' + (await getData('accessToken')),
+            },
+          },
+        );
         if (response.status != 200) {
-          alert("Không thể lấy dữ liệu từ server!");
+          alert('Không thể lấy dữ liệu từ server!');
         } else {
           setCourseCode(response.data.courseCode);
           setSessionNumber(response.data.lectureNumber.toString());
           setCodeForm(response.data.code);
           setHours(Math.floor(response.data.timeOfPeriod / 3600).toString());
-          setMinutes(Math.floor((response.data.timeOfPeriod % 3600) / 60).toString());
+          setMinutes(
+            Math.floor((response.data.timeOfPeriod % 3600) / 60).toString(),
+          );
         }
         if (response.data.questions) {
           console.log(response.data.questions);
@@ -71,7 +89,7 @@ const AddFormScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
-  const hasCorrectAnswer = (answers) => {
+  const hasCorrectAnswer = answers => {
     return answers.some(answer => answer.correct);
   };
 
@@ -87,7 +105,7 @@ const AddFormScreen = ({ navigation }) => {
     }
 
     if (question.trim() !== '') {
-      const newQuestion = { id: new Date().getTime(), question, answers };
+      const newQuestion = {id: new Date().getTime(), question, answers};
       setQuestionsList([...questionsList, newQuestion]);
       setQuestion('');
       setAnswers([]);
@@ -113,8 +131,8 @@ const AddFormScreen = ({ navigation }) => {
       content: question.question,
       answers: question.answers.map(answer => ({
         content: answer.text,
-        isTrue: answer.correct
-      }))
+        isTrue: answer.correct,
+      })),
     }));
 
     // Lấy tọa độ hiện tại
@@ -122,13 +140,13 @@ const AddFormScreen = ({ navigation }) => {
       return new Promise((resolve, reject) => {
         Geolocation.getCurrentPosition(
           position => {
-            const { latitude, longitude } = position.coords;
-            resolve({ latitude, longitude });
+            const {latitude, longitude} = position.coords;
+            resolve({latitude, longitude});
           },
           error => {
             reject(error.message);
           },
-          { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+          {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
         );
       });
     };
@@ -139,7 +157,8 @@ const AddFormScreen = ({ navigation }) => {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
             title: 'Yêu cầu quyền truy cập vị trí',
-            message: 'Ứng dụng cần quyền truy cập vị trí để lấy tọa độ địa lý hiện tại.',
+            message:
+              'Ứng dụng cần quyền truy cập vị trí để lấy tọa độ địa lý hiện tại.',
             buttonNeutral: 'Hỏi lại sau',
             buttonNegative: 'Hủy bỏ',
             buttonPositive: 'Đồng ý',
@@ -156,48 +175,53 @@ const AddFormScreen = ({ navigation }) => {
       setLongitude(location.longitude);
 
       let data = JSON.stringify({
-        "lectureNumber": sessionNumber,
-        "timeOfPeriod": expiryTime,
-        "questions": questionsDTO,
-        "latitude": location.latitude, // Gửi latitude
-        "longitude": location.longitude // Gửi longitude
+        lectureNumber: sessionNumber,
+        timeOfPeriod: expiryTime,
+        questions: questionsDTO,
+        latitude: location.latitude, // Gửi latitude
+        longitude: location.longitude, // Gửi longitude
       });
       console.log(data);
 
       let config = {
         method: 'post',
         maxBodyLength: Infinity,
-        url: `${API_URL}/teacher/create-form?courseId=${await getData('currentClassId')}`,
+        url: `${API_URL}/teacher/create-form?courseId=${await getData(
+          'currentClassId',
+        )}`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + await getData('accessToken')
+          Authorization: 'Bearer ' + (await getData('accessToken')),
         },
-        data: data
+        data: data,
       };
       setIsLoading(false);
 
-      axios.request(config)
-        .then((response) => {
+      axios
+        .request(config)
+        .then(response => {
           console.log(JSON.stringify(response.data));
           if (response.status === 200) {
-            alert("Tạo form điểm danh thành công! Code: " + response.data);
+            alert('Tạo form điểm danh thành công! Code: ' + response.data);
             setCodeForm(response.data);
           }
         })
-        .catch((error) => {
+        .catch(error => {
           console.log(error);
         });
-
     } catch (error) {
       console.error(error);
-      alert('Lỗi khi lấy vị trí hiện tại. Vui lòng kiểm tra lại quyền truy cập vị trí.');
+      alert(
+        'Lỗi khi lấy vị trí hiện tại. Vui lòng kiểm tra lại quyền truy cập vị trí.',
+      );
       setIsLoading(false);
     }
   };
 
   const toggleCorrectness = (questionIndex, answerIndex) => {
     const newQuestionsList = [...questionsList];
-    newQuestionsList[questionIndex].answers[answerIndex].correct = !newQuestionsList[questionIndex].answers[answerIndex].correct;
+    newQuestionsList[questionIndex].answers[answerIndex].correct =
+      !newQuestionsList[questionIndex].answers[answerIndex].correct;
     setQuestionsList(newQuestionsList);
   };
 
@@ -238,27 +262,30 @@ const AddFormScreen = ({ navigation }) => {
             />
             <Text style={styles.timeLabel}>Phút</Text>
           </View>
-
         </View>
         <View style={styles.questionHeader}>
           <Text style={styles.label}>Danh sách câu hỏi</Text>
-          <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setModalVisible(true)}>
             <Text style={styles.addButtonText}>+</Text>
           </TouchableOpacity>
         </View>
         <FlatList
           data={questionsList}
-          renderItem={({ item, index }) => (
+          renderItem={({item, index}) => (
             <QuestionCard
               questionInfo={item}
               onPress={() => {
                 setSelectedQuestion(item);
                 setUpdateModalVisible(true);
               }}
-              toggleCorrectness={(answerIndex) => toggleCorrectness(index, answerIndex)}
+              toggleCorrectness={answerIndex =>
+                toggleCorrectness(index, answerIndex)
+              }
             />
           )}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           style={styles.questionsList}
         />
       </View>
@@ -266,7 +293,9 @@ const AddFormScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Tạo/Cập nhật</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={[styles.button, styles.cancelButton]}
+          onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText}>Quay lại</Text>
         </TouchableOpacity>
       </View>

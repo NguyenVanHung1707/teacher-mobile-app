@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, {useState} from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 
-const AddFormModal = ({ visible, onClose, onSubmit }) => {
+const AddFormModal = ({visible, onClose, onSubmit}) => {
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
   const [seconds, setSeconds] = useState('');
@@ -18,7 +25,7 @@ const AddFormModal = ({ visible, onClose, onSubmit }) => {
 
   const handleSubmit = () => {
     const expiryTime = `${hours}:${minutes}:${seconds}`;
-    onSubmit({ expiryTime, questions: questionsList, answer });
+    onSubmit({expiryTime, questions: questionsList, answer});
     setHours('');
     setMinutes('');
     setSeconds('');
@@ -32,8 +39,7 @@ const AddFormModal = ({ visible, onClose, onSubmit }) => {
       transparent={true}
       animationType="slide"
       visible={visible}
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Tạo Form Điểm Danh</Text>
@@ -70,7 +76,9 @@ const AddFormModal = ({ visible, onClose, onSubmit }) => {
               value={question}
               onChangeText={setQuestion}
             />
-            <TouchableOpacity style={styles.addButton} onPress={handleAddQuestion}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddQuestion}>
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
           </View>
@@ -89,7 +97,9 @@ const AddFormModal = ({ visible, onClose, onSubmit }) => {
             <TouchableOpacity style={styles.button} onPress={handleSubmit}>
               <Text style={styles.buttonText}>Tạo</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}>
               <Text style={styles.buttonText}>Hủy</Text>
             </TouchableOpacity>
           </View>

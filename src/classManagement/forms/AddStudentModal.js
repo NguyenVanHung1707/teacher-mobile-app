@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, View, TextInput, Button, StyleSheet, Text, FlatList, TouchableOpacity } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  Modal,
+  View,
+  TextInput,
+  Button,
+  StyleSheet,
+  Text,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
 import axios from 'axios'; // Thêm axios để gọi API
-import { API_URL } from '@env'; // Thêm API_URL từ file env.js
-import { getData } from '../../Utility'; // Thêm hàm getData từ file Utility.js
+import {API_URL} from '@env'; // Thêm API_URL từ file env.js
+import {getData} from '../../Utility'; // Thêm hàm getData từ file Utility.js
 
-const AddStudentModal = ({ visible, onClose, onSubmit }) => {
+const AddStudentModal = ({visible, onClose, onSubmit}) => {
   const [searchName, setSearchName] = useState('');
   const [studentName, setStudentName] = useState('');
   const [studentCode, setStudentCode] = useState('');
-  const [studentId, setStudentId] = useState(''); // Thêm state để lưu id của sinh viên 
+  const [studentId, setStudentId] = useState(''); // Thêm state để lưu id của sinh viên
   const [searchResults, setSearchResults] = useState([]); // State để lưu kết quả tìm kiếm
 
   useEffect(() => {
@@ -19,19 +28,20 @@ const AddStudentModal = ({ visible, onClose, onSubmit }) => {
           method: 'get',
           maxBodyLength: Infinity,
           url: `${API_URL}/teacher/search-student?name=${searchName}`,
-          headers: { 
-            'Authorization': 'Bearer ' + await getData('accessToken')
-          }
+          headers: {
+            Authorization: 'Bearer ' + (await getData('accessToken')),
+          },
         };
-        
-        axios.request(config)
-        .then((response) => {
-          setSearchResults(response.data); // Lưu kết quả tìm kiếm vào state
-          console.log(JSON.stringify(response.data));
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+
+        axios
+          .request(config)
+          .then(response => {
+            setSearchResults(response.data); // Lưu kết quả tìm kiếm vào state
+            console.log(JSON.stringify(response.data));
+          })
+          .catch(error => {
+            console.log(error);
+          });
       } else {
         setSearchResults([]); // Nếu không có gì để tìm kiếm, đặt kết quả về rỗng
       }
@@ -44,32 +54,39 @@ const AddStudentModal = ({ visible, onClose, onSubmit }) => {
     let config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: `${API_URL}/teacher/add-student-to-course?courseId=${await getData('currentClassId')}&studentId=${studentId}`,
-      headers: { 
-        'Authorization': 'Bearer ' + await getData('accessToken'),
-      }
+      url: `${API_URL}/teacher/add-student-to-course?courseId=${await getData(
+        'currentClassId',
+      )}&studentId=${studentId}`,
+      headers: {
+        Authorization: 'Bearer ' + (await getData('accessToken')),
+      },
     };
-    
-    axios.request(config)
-    .then((response) => {
-      console.log(JSON.stringify(response.data));
-      if(response.status === 200) {
-        alert('Thêm sinh viên thành công');
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      console.log('Response data:', error.response.data);
-      console.log('Response status:', error.response.status);
-      if(error.response.status === 400 && error.response.data.message === 'Student already registered to this course') {
-        alert('Sinh viên đã tồn tại trong lớp');
-      }
-    });
+
+    axios
+      .request(config)
+      .then(response => {
+        console.log(JSON.stringify(response.data));
+        if (response.status === 200) {
+          alert('Thêm sinh viên thành công');
+        }
+      })
+      .catch(error => {
+        console.log(error);
+        console.log('Response data:', error.response.data);
+        console.log('Response status:', error.response.status);
+        if (
+          error.response.status === 400 &&
+          error.response.data.message ===
+            'Student already registered to this course'
+        ) {
+          alert('Sinh viên đã tồn tại trong lớp');
+        }
+      });
     onSubmit(studentName);
     onClose();
   };
 
-  const handleSelectStudent = (student) => {
+  const handleSelectStudent = student => {
     setStudentName(student.name);
     setStudentCode(student.studentCode);
     setStudentId(student.id); // Lưu id của sinh viên
@@ -77,11 +94,7 @@ const AddStudentModal = ({ visible, onClose, onSubmit }) => {
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={true} onRequestClose={onClose}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <TextInput
@@ -93,8 +106,10 @@ const AddStudentModal = ({ visible, onClose, onSubmit }) => {
           {searchResults.length > 0 && (
             <FlatList
               data={searchResults}
-              renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => handleSelectStudent(item)} style={styles.searchResultItem}>
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  onPress={() => handleSelectStudent(item)}
+                  style={styles.searchResultItem}>
                   <Text style={styles.searchResultText}>{item.name}</Text>
                 </TouchableOpacity>
               )}
@@ -105,8 +120,18 @@ const AddStudentModal = ({ visible, onClose, onSubmit }) => {
           <Text style={styles.label}>Họ tên: {studentName}</Text>
           <Text style={styles.label}>MSSV: {studentCode}</Text>
           <View style={styles.buttonGroup}>
-            <Button title="Thêm" onPress={handleSubmit} color="#007BFF" style={styles.button}/>
-            <Button title="Đóng" onPress={onClose} color="#FF0000" style={styles.button}/>
+            <Button
+              title="Thêm"
+              onPress={handleSubmit}
+              color="#007BFF"
+              style={styles.button}
+            />
+            <Button
+              title="Đóng"
+              onPress={onClose}
+              color="#FF0000"
+              style={styles.button}
+            />
           </View>
         </View>
       </View>
@@ -141,7 +166,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', // Thêm màu nền cho danh sách
     borderRadius: 5,
     shadowColor: '#000', // Thêm shadow cho danh sách
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 5, // Thêm shadow cho Android
@@ -169,8 +194,8 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1, // Phân chia độ rộng của nút
-    marginHorizontal: 5 // Khoảng cách giữa các nút
-  }
+    marginHorizontal: 5, // Khoảng cách giữa các nút
+  },
 });
 
 export default AddStudentModal;

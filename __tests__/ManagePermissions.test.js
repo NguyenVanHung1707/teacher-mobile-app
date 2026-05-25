@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react-native';
+import {render, fireEvent, act} from '@testing-library/react-native';
 import ManagePermissions from '../src/classManagement/ManagePermissions';
 import axios from 'axios';
 
@@ -13,7 +13,7 @@ jest.mock('@react-navigation/native', () => {
       goBack: mockGoBack,
     }),
     useRoute: () => ({
-      params: { classId: 456 },
+      params: {classId: 456},
     }),
   };
 });
@@ -21,18 +21,33 @@ jest.mock('@react-navigation/native', () => {
 describe('ManagePermissions Screen (Teacher Dashboard)', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    await require('@react-native-async-storage/async-storage').setItem('accessToken', 'fake-token');
+    await require('@react-native-async-storage/async-storage').setItem(
+      'accessToken',
+      'fake-token',
+    );
   });
 
   const mockStudents = [
-    { studentId: 1001, studentName: 'Lê Văn C', studentCode: 'SV001', canUploadDocuments: false, canDownloadDocuments: true },
-    { studentId: 1002, studentName: 'Trần Thị D', studentCode: 'SV002', canUploadDocuments: true, canDownloadDocuments: false }
+    {
+      studentId: 1001,
+      studentName: 'Lê Văn C',
+      studentCode: 'SV001',
+      canUploadDocuments: false,
+      canDownloadDocuments: true,
+    },
+    {
+      studentId: 1002,
+      studentName: 'Trần Thị D',
+      studentCode: 'SV002',
+      canUploadDocuments: true,
+      canDownloadDocuments: false,
+    },
   ];
 
   it('renders loading state first and empty message when no students', async () => {
-    axios.get.mockResolvedValueOnce({ data: [] });
+    axios.get.mockResolvedValueOnce({data: []});
 
-    const { getByText } = render(<ManagePermissions />);
+    const {getByText} = render(<ManagePermissions />);
 
     await act(async () => {
       await Promise.resolve();
@@ -42,9 +57,9 @@ describe('ManagePermissions Screen (Teacher Dashboard)', () => {
   });
 
   it('fetches student permissions list and renders student detail cards', async () => {
-    axios.get.mockResolvedValueOnce({ data: mockStudents });
+    axios.get.mockResolvedValueOnce({data: mockStudents});
 
-    const { getByText } = render(<ManagePermissions />);
+    const {getByText} = render(<ManagePermissions />);
 
     await act(async () => {
       await Promise.resolve();
@@ -52,7 +67,7 @@ describe('ManagePermissions Screen (Teacher Dashboard)', () => {
 
     expect(axios.get).toHaveBeenCalledWith(
       expect.stringContaining('/documents/class/456/permissions'),
-      expect.any(Object)
+      expect.any(Object),
     );
 
     // Verify student info rendered
@@ -63,10 +78,10 @@ describe('ManagePermissions Screen (Teacher Dashboard)', () => {
   });
 
   it('sends specific student toggle API call when switch state changes', async () => {
-    axios.get.mockResolvedValueOnce({ data: mockStudents });
-    axios.post.mockResolvedValueOnce({ status: 200, data: {} }); // success mock
+    axios.get.mockResolvedValueOnce({data: mockStudents});
+    axios.post.mockResolvedValueOnce({status: 200, data: {}}); // success mock
 
-    const { getAllByRole } = render(<ManagePermissions />);
+    const {getAllByRole} = render(<ManagePermissions />);
 
     await act(async () => {
       await Promise.resolve();
@@ -75,7 +90,7 @@ describe('ManagePermissions Screen (Teacher Dashboard)', () => {
     // Find switches. In react-native, Switch component behaves as a button or has role='switch'
     const switches = getAllByRole('switch');
     // Student 1 (Lê Văn C): canDownload = true (switches[0]), canUpload = false (switches[1])
-    
+
     // Let's toggle upload for Lê Văn C (switches[1] from false to true)
     await act(async () => {
       fireEvent(switches[1], 'onValueChange', true);
@@ -83,31 +98,31 @@ describe('ManagePermissions Screen (Teacher Dashboard)', () => {
 
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining('/documents/class/456/permissions/student/1001'),
-      { canUpload: true, canDownload: true }, // nextUpload is true, nextDownload is unchanged (true)
-      expect.any(Object)
+      {canUpload: true, canDownload: true}, // nextUpload is true, nextDownload is unchanged (true)
+      expect.any(Object),
     );
   });
 
   it('sends bulk permissions toggle API call when bulk buttons are clicked', async () => {
-    axios.get.mockResolvedValueOnce({ data: mockStudents });
-    axios.post.mockResolvedValueOnce({ status: 200, data: {} });
+    axios.get.mockResolvedValueOnce({data: mockStudents});
+    axios.post.mockResolvedValueOnce({status: 200, data: {}});
 
-    const { getAllByText } = render(<ManagePermissions />);
+    const {getAllByText} = render(<ManagePermissions />);
 
     await act(async () => {
       await Promise.resolve();
     });
 
     const bulkUploadButton = getAllByText('Tải lên')[0];
-    
+
     await act(async () => {
       fireEvent.press(bulkUploadButton);
     });
 
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining('/documents/class/456/permissions/bulk'),
-      { canUpload: true, canDownload: false }, // canUpload is toggled to true bulk, canDownload is unchanged bulk
-      expect.any(Object)
+      {canUpload: true, canDownload: false}, // canUpload is toggled to true bulk, canDownload is unchanged bulk
+      expect.any(Object),
     );
   });
 });

@@ -1,23 +1,26 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Modal} from 'react-native';
 
-export default function ConfirmDeleteModal({ visible, onClose, onConfirm }) {
+export default function ConfirmDeleteModal({visible, onClose, onConfirm}) {
   return (
     <Modal
       transparent={true}
       animationType="slide"
       visible={visible}
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Xác nhận xóa lớp</Text>
-          <Text style={styles.modalText}>Bạn có chắc chắn muốn xóa lớp này không?</Text>
+          <Text style={styles.modalText}>
+            Bạn có chắc chắn muốn xóa lớp này không?
+          </Text>
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.button} onPress={onConfirm}>
               <Text style={styles.buttonText}>Xóa</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}>
               <Text style={styles.buttonText}>Hủy</Text>
             </TouchableOpacity>
           </View>

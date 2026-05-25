@@ -1,7 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, FlatList, Switch } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  FlatList,
+  Switch,
+} from 'react-native';
 
-const UpdateQuestionModal = ({ modalVisible, setModalVisible, currentQuestion, setQuestionsList }) => {
+const UpdateQuestionModal = ({
+  modalVisible,
+  setModalVisible,
+  currentQuestion,
+  setQuestionsList,
+}) => {
   const [question, setQuestion] = useState('');
   const [answers, setAnswers] = useState([]);
 
@@ -13,7 +27,7 @@ const UpdateQuestionModal = ({ modalVisible, setModalVisible, currentQuestion, s
   }, [currentQuestion]);
 
   const addAnswer = () => {
-    setAnswers([...answers, { text: '', correct: false }]);
+    setAnswers([...answers, {text: '', correct: false}]);
   };
 
   const updateAnswer = (index, text) => {
@@ -23,24 +37,28 @@ const UpdateQuestionModal = ({ modalVisible, setModalVisible, currentQuestion, s
     console.log(answers);
   };
 
-  const toggleCorrectness = (index) => {
+  const toggleCorrectness = index => {
     const newAnswers = [...answers];
     newAnswers[index].correct = !newAnswers[index].correct;
     setAnswers(newAnswers);
   };
 
   const handleSave = () => {
-    setQuestionsList((prevQuestionsList) => {
+    setQuestionsList(prevQuestionsList => {
       const newQuestionsList = [...prevQuestionsList];
-      const questionIndex = newQuestionsList.findIndex((q) => q.id === currentQuestion.id);
-      newQuestionsList[questionIndex] = { ...currentQuestion, question, answers };
+      const questionIndex = newQuestionsList.findIndex(
+        q => q.id === currentQuestion.id,
+      );
+      newQuestionsList[questionIndex] = {...currentQuestion, question, answers};
       return newQuestionsList;
     });
     setModalVisible(false);
   };
 
   const handleDelete = () => {
-    setQuestionsList((prevQuestionsList) => prevQuestionsList.filter((q) => q.id !== currentQuestion.id));
+    setQuestionsList(prevQuestionsList =>
+      prevQuestionsList.filter(q => q.id !== currentQuestion.id),
+    );
     setModalVisible(false);
   };
 
@@ -49,8 +67,7 @@ const UpdateQuestionModal = ({ modalVisible, setModalVisible, currentQuestion, s
       transparent={true}
       animationType="slide"
       visible={modalVisible}
-      onRequestClose={() => setModalVisible(false)}
-    >
+      onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Cập nhật câu hỏi</Text>
@@ -64,20 +81,22 @@ const UpdateQuestionModal = ({ modalVisible, setModalVisible, currentQuestion, s
             />
           </View>
           <Text style={styles.inputLabel}>Câu trả lời</Text>
-          {answers && Array.isArray(answers) && answers.map((answer, index) => (
-            <View style={styles.answerItemContainer} key={index}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder={`Câu trả lời ${index + 1}`}
-                value={answer.text}
-                onChangeText={(text) => updateAnswer(index, text)}
-              />
-              <Switch
-                value={answer.correct}
-                onValueChange={() => toggleCorrectness(index)}
-              />
-            </View>
-          ))}
+          {answers &&
+            Array.isArray(answers) &&
+            answers.map((answer, index) => (
+              <View style={styles.answerItemContainer} key={index}>
+                <TextInput
+                  style={[styles.input, {flex: 1}]}
+                  placeholder={`Câu trả lời ${index + 1}`}
+                  value={answer.text}
+                  onChangeText={text => updateAnswer(index, text)}
+                />
+                <Switch
+                  value={answer.correct}
+                  onValueChange={() => toggleCorrectness(index)}
+                />
+              </View>
+            ))}
           <TouchableOpacity style={styles.addButton} onPress={addAnswer}>
             <Text style={styles.addButtonText}>Thêm câu trả lời</Text>
           </TouchableOpacity>
@@ -85,10 +104,14 @@ const UpdateQuestionModal = ({ modalVisible, setModalVisible, currentQuestion, s
             <TouchableOpacity style={styles.button} onPress={handleSave}>
               <Text style={styles.buttonText}>Lưu</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={handleDelete}>
+            <TouchableOpacity
+              style={[styles.button, styles.deleteButton]}
+              onPress={handleDelete}>
               <Text style={styles.buttonText}>Xóa</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => setModalVisible(false)}>
               <Text style={styles.buttonText}>Hủy</Text>
             </TouchableOpacity>
           </View>
@@ -149,7 +172,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 5,
     justifyContent: 'space-between',
-    width: '100%'
+    width: '100%',
   },
   buttonRow: {
     flexDirection: 'row',

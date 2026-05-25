@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Dimensions, ScrollView, StyleSheet } from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
+import React, {useEffect, useState} from 'react';
+import {View, Text, Dimensions, ScrollView, StyleSheet} from 'react-native';
+import {BarChart} from 'react-native-gifted-charts';
 import axios from 'axios';
-import { getData } from './Utility';
-import { API_URL } from '@env';
+import {getData} from './Utility';
+import {API_URL} from '@env';
 
 export default function HomePage() {
   const [data, setData] = useState([]);
-  const screenWidth = Dimensions.get("window").width;
+  const screenWidth = Dimensions.get('window').width;
   const chartWidth = screenWidth * 2.5; // Điều chỉnh để đảm bảo nhãn cuối cùng không bị cắt
   const [data1, setData1] = useState([]);
 
@@ -18,8 +18,8 @@ export default function HomePage() {
         method: 'get',
         url: `${API_URL}/teacher/get-my-class-chart`,
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       };
       const response = await axios.request(config);
       console.log(JSON.stringify(response.data));
@@ -31,17 +31,17 @@ export default function HomePage() {
           value: item.value,
           frontColor: '#1cc910', // Tùy chỉnh màu của cột
           topLabelComponent: () => (
-            <Text style={{ color: '#000' }}>{item.value}</Text>
+            <Text style={{color: '#000'}}>{item.value}</Text>
           ),
         }));
         setData(chartData);
       } else {
-        console.error("API data does not match expected structure");
+        console.error('API data does not match expected structure');
       }
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   const fetchData1 = async () => {
     try {
@@ -50,8 +50,8 @@ export default function HomePage() {
         method: 'get',
         url: `${API_URL}/teacher/get-rate-of-my-class-chart`,
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       };
       const response = await axios.request(config);
       console.log(JSON.stringify(response.data));
@@ -63,18 +63,20 @@ export default function HomePage() {
           value: item.value * 100, // Chuyển đổi thành phần trăm
           frontColor: '#1cc910', // Tùy chỉnh màu của cột
           topLabelComponent: () => (
-            <Text style={{ color: '#000', fontSize: 9 }}>{(item.value * 100).toFixed(1)}%</Text> // Hiển thị phần trăm
+            <Text style={{color: '#000', fontSize: 9}}>
+              {(item.value * 100).toFixed(1)}%
+            </Text> // Hiển thị phần trăm
           ),
         }));
         console.log(chartData);
         setData1(chartData);
       } else {
-        console.error("API data does not match expected structure 1");
+        console.error('API data does not match expected structure 1');
       }
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   useEffect(() => {
     fetchData();
@@ -84,7 +86,8 @@ export default function HomePage() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Biểu đồ số lượng học sinh trong lớp</Text>
-      <ScrollView contentContainerStyle={{ flexDirection: 'row', paddingRight: 5 }}>
+      <ScrollView
+        contentContainerStyle={{flexDirection: 'row', paddingRight: 5}}>
         <View>
           {data && data.length > 0 ? (
             <ScrollView horizontal={true}>
@@ -109,7 +112,6 @@ export default function HomePage() {
                   fontWeight: 'bold', // In đậm
                   color: '#000', // Màu chữ (có thể tùy chỉnh)
                 }}
-
                 // Custom styles for the y-axis labels
                 yAxisLabelTextStyle={{
                   fontWeight: 'bold', // In đậm
@@ -123,7 +125,8 @@ export default function HomePage() {
         </View>
       </ScrollView>
       <Text style={styles.header}>Biểu đồ tỉ lệ điểm danh</Text>
-      <ScrollView contentContainerStyle={{ flexDirection: 'row', paddingRight: 5 }}>
+      <ScrollView
+        contentContainerStyle={{flexDirection: 'row', paddingRight: 5}}>
         <View>
           {data1 && data1.length > 0 ? (
             <ScrollView horizontal={true}>
@@ -177,7 +180,7 @@ const styles = StyleSheet.create({
     textAlign: 'center', // Căn giữa
     marginVertical: 20, // Khoảng cách trên dưới
     textShadowColor: '#aaa', // Màu bóng chữ
-    textShadowOffset: { width: 2, height: 2 }, // Vị trí bóng chữ
+    textShadowOffset: {width: 2, height: 2}, // Vị trí bóng chữ
     textShadowRadius: 4, // Bán kính bóng chữ
   },
 });
