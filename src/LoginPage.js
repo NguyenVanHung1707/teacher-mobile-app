@@ -18,6 +18,46 @@ import {
   KEYCLOAK_TOKEN_ENDPOINT,
 } from './config';
 
+const base64Decode = (str) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let buffer = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (buffer.length % 4) {
+    buffer += '=';
+  }
+  
+  let result = '';
+  for (let i = 0; i < buffer.length; i += 4) {
+    const w = chars.indexOf(buffer[i] || '');
+    const x = chars.indexOf(buffer[i + 1] || '');
+    const y = chars.indexOf(buffer[i + 2] || '');
+    const z = chars.indexOf(buffer[i + 3] || '');
+    
+    const a = (w << 2) | (x >> 4);
+    const b = ((x & 15) << 4) | (y >> 2);
+    const c = ((y & 3) << 6) | z;
+    
+    result += String.fromCharCode(a);
+    if (y !== 64 && buffer[i + 2] !== '=') result += String.fromCharCode(b);
+    if (z !== 64 && buffer[i + 3] !== '=') result += String.fromCharCode(c);
+  }
+  return result;
+};
+
+const decodeJwt = (token) => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const decoded = base64Decode(parts[1]);
+    return JSON.parse(decoded);
+  } catch (e) {
+    try {
+      return JSON.parse(decodeURIComponent(escape(base64Decode(parts[1]))));
+    } catch (err) {
+      return null;
+    }
+  }
+};
+
 export default function LoginPage({navigation}) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -61,6 +101,18 @@ export default function LoginPage({navigation}) {
           throw new Error('Missing access token');
         }
 
+        // Verify client-side role first
+        const payload = decodeJwt(data.access_token);
+        const roles = payload?.realm_access?.roles || [];
+        if (!roles.includes('teacher')) {
+          Alert.alert(
+            'Từ chối truy cập',
+            'Tài khoản của bạn là Sinh viên. Vui lòng đăng nhập bằng tài khoản Giảng viên!',
+          );
+          setIsLoading(false);
+          return;
+        }
+
         await AsyncStorage.setItem('accessToken', data.access_token);
 
         // Fetch teacher profile to verify approved/pending/rejected status
@@ -90,16 +142,25 @@ export default function LoginPage({navigation}) {
           }
         } catch (err) {
           console.error('Error fetching teacher profile status:', err);
-          // Fallback to Main if check fails
-          navigation.replace('Main');
+          if (err.response?.status === 403) {
+            Alert.alert(
+              'Từ chối truy cập',
+              'Tài khoản của bạn không có quyền truy cập ứng dụng Giảng viên!',
+            );
+          } else {
+            // General network error fallback (since role was already validated in JWT)
+            navigation.replace('Main');
+          }
         }
       })
       .catch(error => {
         console.error(error);
-        Alert.alert(
-          'Lỗi đăng nhập',
-          'Tên đăng nhập hoặc mật khẩu không chính xác.',
-        );
+        if (error.message !== 'Missing access token' && !error.message.includes('Từ chối')) {
+          Alert.alert(
+            'Lỗi đăng nhập',
+            'Tên đăng nhập hoặc mật khẩu không chính xác.',
+          );
+        }
       })
       .finally(() => {
         setIsLoading(false);
