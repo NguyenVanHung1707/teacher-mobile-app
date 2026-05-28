@@ -9,7 +9,10 @@ import {
   ActivityIndicator,
   Alert,
   useColorScheme,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import {storeData, getData, getThemeColors} from './Utility';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -18,6 +21,8 @@ import {
   KEYCLOAK_CLIENT_ID,
   KEYCLOAK_TOKEN_ENDPOINT,
 } from './config';
+
+const {width} = Dimensions.get('window');
 
 const base64Decode = (str) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -63,6 +68,7 @@ export default function LoginPage({navigation}) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [securePassword, setSecurePassword] = useState(true);
 
   const isDark = useColorScheme() === 'dark';
   const theme = getThemeColors(isDark);
@@ -86,12 +92,14 @@ export default function LoginPage({navigation}) {
       username: username.trim(),
       password,
     }).toString();
+
     const requestOptions = {
       method: 'POST',
       headers: myHeaders,
       body: urlencoded,
       redirect: 'follow',
     };
+
     setIsLoading(true);
     fetch(KEYCLOAK_TOKEN_ENDPOINT, requestOptions)
       .then(response => {
@@ -173,57 +181,73 @@ export default function LoginPage({navigation}) {
 
   return (
     <KeyboardAvoidingView style={[styles.container, {backgroundColor: theme.bg}]} behavior="padding">
-      <View style={styles.logoZone}>
-        <Text style={[styles.logoText, {color: theme.text}]}>BKHN</Text>
-        <Text style={[styles.subLogoText, {color: theme.primary}]}>Teacher Portal</Text>
-      </View>
-      <View style={styles.signInZone}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.textInput, {backgroundColor: theme.inputBg, color: theme.inputText, borderColor: theme.border}]}
-            placeholder="Your Email / Username"
-            value={username}
-            onChangeText={val => setUsername(val)}
-            placeholderTextColor={theme.placeholder}
-            autoCapitalize="none"
-          />
+      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerContainer}>
+          <View style={[styles.logoIconBg, {backgroundColor: theme.bgSecondary}]}>
+            <Icon name="university" size={40} color={theme.primary} />
+          </View>
+          <Text style={[styles.logoText, {color: theme.text}]}>BKHN</Text>
+          <Text style={[styles.subLogoText, {color: theme.primary}]}>TEACHER PORTAL</Text>
+          <Text style={[styles.tagline, {color: theme.textSecondary}]}>Hệ thống thi & điểm danh AI thông minh</Text>
         </View>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.textInput, {backgroundColor: theme.inputBg, color: theme.inputText, borderColor: theme.border}]}
-            placeholder="Password"
-            secureTextEntry={true}
-            value={password}
-            onChangeText={val => setPassword(val)}
-            placeholderTextColor={theme.placeholder}
-            autoCapitalize="none"
-          />
-        </View>
-      </View>
-      <View style={styles.bottomZone}>
-        <TouchableOpacity
-          style={[styles.primaryButton, {backgroundColor: theme.primary}, isLoading && styles.disabledButton]}
-          onPress={() => signIn()}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.primaryButtonText}>ĐĂNG NHẬP SSO</Text>
-          )}
-        </TouchableOpacity>
 
-        <View style={styles.row2Bot}>
+        <View style={[styles.formCard, {backgroundColor: theme.card, borderColor: theme.border}]}>
+          <Text style={[styles.formTitle, {color: theme.text}]}>Đăng Nhập</Text>
+          
+          <View style={[styles.inputWrapper, {backgroundColor: theme.inputBg, borderColor: theme.border}]}>
+            <Icon name="user-circle-o" size={18} color={theme.placeholder} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.textInput, {color: theme.inputText}]}
+              placeholder="Username / Email"
+              value={username}
+              onChangeText={setUsername}
+              placeholderTextColor={theme.placeholder}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={[styles.inputWrapper, {backgroundColor: theme.inputBg, borderColor: theme.border}]}>
+            <Icon name="lock" size={18} color={theme.placeholder} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.textInput, {color: theme.inputText}]}
+              placeholder="Mật khẩu"
+              secureTextEntry={securePassword}
+              value={password}
+              onChangeText={setPassword}
+              placeholderTextColor={theme.placeholder}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity onPress={() => setSecurePassword(!securePassword)} style={styles.eyeIcon}>
+              <Icon name={securePassword ? 'eye-slash' : 'eye'} size={18} color={theme.placeholder} />
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
-            style={styles.signUp}
-            onPress={() => navigation.navigate('SignUp')}>
-            <Text style={[styles.signUpText, {color: theme.secondary}]}>Sign Up</Text>
+            style={[styles.primaryButton, {backgroundColor: theme.primary}, isLoading && styles.disabledButton]}
+            onPress={() => signIn()}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.primaryButtonText}>ĐĂNG NHẬP SSO</Text>
+            )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={[styles.signUpText, {color: theme.textSecondary}]}>Forgot Password</Text>
+
+          <View style={styles.forgotRow}>
+            <TouchableOpacity style={styles.forgotBtn}>
+              <Text style={[styles.forgotText, {color: theme.textSecondary}]}>Quên mật khẩu?</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.footerRow}>
+          <Text style={[styles.footerText, {color: theme.textSecondary}]}>Chưa có tài khoản?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.signUpBtn}>
+            <Text style={[styles.signUpText, {color: theme.secondary}]}> Đăng ký giảng viên</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -231,87 +255,135 @@ export default function LoginPage({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  logoZone: {
-    flex: 3,
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
-    width: '80%',
-    paddingLeft: 10,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 36,
+    width: '100%',
+  },
+  logoIconBg: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   logoText: {
-    fontSize: 48,
-    fontWeight: '800',
-    fontFamily: 'System',
-    letterSpacing: -1,
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginBottom: 2,
   },
   subLogoText: {
-    fontSize: 32,
+    fontSize: 16,
     fontWeight: '800',
-    fontFamily: 'System',
-    marginTop: -5,
+    letterSpacing: 4,
+    marginBottom: 8,
   },
-  signInZone: {
-    flex: 2,
-    width: '80%',
-    justifyContent: 'center',
+  tagline: {
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
   },
-  textInput: {
-    height: 55,
+  formCard: {
     width: '100%',
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
     borderWidth: 1,
-    fontSize: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 6,
+    marginBottom: 28,
   },
-  inputContainer: {
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
     marginBottom: 16,
   },
-  bottomZone: {
-    flex: 3,
-    justifyContent: 'flex-start',
-    width: '80%',
-    marginTop: 20,
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    padding: 0,
+  },
+  eyeIcon: {
+    padding: 4,
   },
   primaryButton: {
-    width: '100%',
-    height: 55,
-    borderRadius: 8,
+    height: 52,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowColor: '#0F62FE',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    marginTop: 8,
   },
   disabledButton: {
-    opacity: 0.8,
+    opacity: 0.7,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: '#FFF',
     fontSize: 15,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
-  row2Bot: {
+  forgotRow: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  forgotBtn: {
+    padding: 4,
+  },
+  forgotText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  footerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-    paddingHorizontal: 5,
-  },
-  signUp: {
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 12,
   },
-  forgotPassword: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  footerText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  signUpBtn: {
+    paddingVertical: 4,
   },
   signUpText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    fontFamily: 'System',
+    fontWeight: '700',
   },
 });

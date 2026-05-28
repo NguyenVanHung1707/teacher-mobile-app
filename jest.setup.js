@@ -136,4 +136,17 @@ jest.mock('react-native-gifted-charts', () => ({
   LineChart: 'LineChart',
 }));
 
+// Mock react-native-document-picker
+jest.mock('react-native-document-picker', () => ({
+  pick: jest.fn(() => Promise.resolve([])),
+  types: {
+    allFiles: 'allFiles',
+    images: 'images',
+    plainText: 'plainText',
+    audio: 'audio',
+    pdf: 'pdf',
+    zip: 'zip',
+  },
+}));
+
 import {Alert} from 'react-native';

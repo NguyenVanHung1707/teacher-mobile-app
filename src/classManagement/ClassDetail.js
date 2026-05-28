@@ -6,13 +6,14 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  useColorScheme,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import StudentCard from './StudentCard';
 import {API_URL} from '@env';
 import axios from 'axios';
-import {getData, storeData, formatToView, convertTime} from '../Utility';
+import {getData, storeData, formatToView, convertTime, getThemeColors} from '../Utility';
 import EditClassModal from './forms/EditClassModal';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import ConfirmDeleteModal from './forms/ConfirmDeleteModal';
@@ -22,6 +23,8 @@ import ImageModal from './forms/ImageModal';
 import ClassDocuments from './ClassDocuments';
 
 export default function ClassDetail() {
+  const isDark = useColorScheme() === 'dark';
+  const theme = getThemeColors(isDark);
   const Separator = () => <View style={{height: 10}} />;
   const navigation = useNavigation();
   const [studentList, setStudentList] = useState([]);
@@ -274,27 +277,27 @@ export default function ClassDetail() {
 
   return (
     <>
-      <View style={styles.classInfoContainer}>
-        <Text style={styles.classInfoText}>Mã lớp: {courseCode}</Text>
-        <Text style={styles.classInfoText}>Môn học: {subject}</Text>
-        <Text style={styles.classInfoText}>Mô tả: {description}</Text>
+      <View style={[styles.classInfoContainer, {backgroundColor: theme.card, borderColor: theme.border}]}>
+        <Text style={[styles.classInfoText, {color: theme.text}]}>Mã lớp: {courseCode}</Text>
+        <Text style={[styles.classInfoText, {color: theme.text}]}>Môn học: {subject}</Text>
+        <Text style={[styles.classInfoText, {color: theme.textSecondary}]}>Mô tả: {description}</Text>
       </View>
-      <View style={styles.activeBar}>
+      <View style={[styles.activeBar, {backgroundColor: theme.bg}]}>
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, {backgroundColor: theme.primary}]}
             onPress={() => clickCreateForm()}>
             <Text style={styles.addButtonText}>Form điểm danh</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, {backgroundColor: theme.primary}]}
             onPress={() => clickImage()}>
             <Text style={styles.addButtonText}>Chụp ảnh điểm danh</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.addButton,
-              {flexDirection: 'row', alignItems: 'center'},
+              {flexDirection: 'row', alignItems: 'center', backgroundColor: theme.secondary},
             ]}
             onPress={() => navigation.navigate('ClassDiscussion')}>
             <Icon
@@ -308,17 +311,17 @@ export default function ClassDetail() {
         </View>
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, {backgroundColor: theme.accent}]}
             onPress={() => clickUpdateClass()}>
             <Text style={styles.addButtonText}>Sửa lớp</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, {backgroundColor: '#EF4444'}]}
             onPress={() => clickDeleteClass()}>
             <Text style={styles.addButtonText}>Xóa lớp</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, {backgroundColor: theme.primary}]}
             onPress={() => clickAddStudent()}>
             <Text style={styles.addButtonText}>Thêm sinh viên</Text>
           </TouchableOpacity>
@@ -326,17 +329,17 @@ export default function ClassDetail() {
       </View>
 
       {/* Segmented Tab Bar */}
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, {backgroundColor: theme.card, borderColor: theme.border}]}>
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === 'students' && styles.activeTabButton,
+            activeTab === 'students' && {backgroundColor: theme.primary},
           ]}
           onPress={() => setActiveTab('students')}>
           <Text
             style={[
               styles.tabButtonText,
-              activeTab === 'students' && styles.activeTabButtonText,
+              activeTab === 'students' ? {color: '#FFFFFF'} : {color: theme.textSecondary},
             ]}>
             Danh sách sinh viên
           </Text>
@@ -344,7 +347,7 @@ export default function ClassDetail() {
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === 'assessment' && styles.activeTabButton,
+            activeTab === 'assessment' && {backgroundColor: theme.primary},
           ]}
           onPress={() => {
             setActiveTab('assessment');
@@ -353,7 +356,7 @@ export default function ClassDetail() {
           <Text
             style={[
               styles.tabButtonText,
-              activeTab === 'assessment' && styles.activeTabButtonText,
+              activeTab === 'assessment' ? {color: '#FFFFFF'} : {color: theme.textSecondary},
             ]}>
             Bài tập & Bài thi
           </Text>
@@ -361,13 +364,13 @@ export default function ClassDetail() {
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === 'document' && styles.activeTabButton,
+            activeTab === 'document' && {backgroundColor: theme.primary},
           ]}
           onPress={() => setActiveTab('document')}>
           <Text
             style={[
               styles.tabButtonText,
-              activeTab === 'document' && styles.activeTabButtonText,
+              activeTab === 'document' ? {color: '#FFFFFF'} : {color: theme.textSecondary},
             ]}>
             Tài liệu
           </Text>
@@ -376,10 +379,10 @@ export default function ClassDetail() {
 
       {activeTab === 'students' ? (
         <>
-          <View style={[styles.container]}>
-            <Text style={styles.text1}>Danh sách sinh viên</Text>
+          <View style={[styles.container, {backgroundColor: theme.bg}]}>
+            <Text style={[styles.text1, {color: theme.text}]}>Danh sách sinh viên</Text>
           </View>
-          <View style={[styles.studentList]}>
+          <View style={[styles.studentList, {backgroundColor: theme.bg}]}>
             <FlatList
               data={studentList}
               renderItem={({item}) => <StudentCard student={item} />}
@@ -390,21 +393,21 @@ export default function ClassDetail() {
         </>
       ) : activeTab === 'assessment' ? (
         <>
-          <View style={[styles.container]}>
-            <Text style={styles.text1}>Bài tập & Bài thi đã giao</Text>
+          <View style={[styles.container, {backgroundColor: theme.bg}]}>
+            <Text style={[styles.text1, {color: theme.text}]}>Bài tập & Bài thi đã giao</Text>
           </View>
-          <View style={[styles.studentList]}>
+          <View style={[styles.studentList, {backgroundColor: theme.bg}]}>
             {isAssessmentsLoading ? (
               <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="#34568B" />
-                <Text style={{marginTop: 10, color: '#7F8C8D'}}>
+                <ActivityIndicator size="large" color={theme.primary} />
+                <Text style={{marginTop: 10, color: theme.textSecondary}}>
                   Đang tải bài thi...
                 </Text>
               </View>
             ) : assessmentsList.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Icon name="file-text-o" size={48} color="#BDC3C7" />
-                <Text style={styles.emptyText}>
+                <Icon name="file-text-o" size={48} color={theme.placeholder} />
+                <Text style={[styles.emptyText, {color: theme.textSecondary}]}>
                   Chưa có bài thi hoặc bài tập nào trong lớp học này.
                 </Text>
               </View>
@@ -457,7 +460,7 @@ export default function ClassDetail() {
       />
       {activeTab === 'assessment' && (
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, {backgroundColor: theme.primary}]}
           onPress={() => navigation.navigate('CreateAssessment', {courseId: classId})}
         >
           <Icon name="plus" size={20} color="#FFFFFF" />

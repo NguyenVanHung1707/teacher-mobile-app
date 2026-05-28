@@ -1,17 +1,23 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {View, Text, FlatList, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, Text, FlatList, TouchableOpacity, StyleSheet, useColorScheme, ActivityIndicator} from 'react-native';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import {API_URL} from '@env';
 import ClassCard from './ClassCard';
 import AddClassModal from './forms/AddClassModal';
-import {getData} from '../Utility';
+import {getData, getThemeColors} from '../Utility';
 import {useFocusEffect} from '@react-navigation/native';
 
 export default function ClassManagement() {
   const [classes, setClasses] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isDark = useColorScheme() === 'dark';
+  const theme = getThemeColors(isDark);
 
   const fetchData = async () => {
+    setIsLoading(true);
     let config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -27,6 +33,9 @@ export default function ClassManagement() {
       })
       .catch(error => {
         console.error(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
 
@@ -45,7 +54,6 @@ export default function ClassManagement() {
   };
 
   const handleAddClass = async (courseCode, subject, description) => {
-    console.log('aloooooo');
     let data = JSON.stringify({
       courseCode: courseCode,
       subject: subject,
@@ -67,7 +75,6 @@ export default function ClassManagement() {
       .request(config)
       .then(response => {
         console.log(JSON.stringify(response.data));
-        console.log(response.status);
         fetchData(); // Reload the class list after adding a new class
       })
       .catch(error => {
@@ -76,65 +83,149 @@ export default function ClassManagement() {
   };
 
   return (
-    <>
-      <View style={styles.activeBar}>
-        <TouchableOpacity style={styles.addButton} onPress={addCourse}>
-          <Text style={styles.addButtonText}>Thêm lớp</Text>
+    <View style={[styles.container, {backgroundColor: theme.bg}]}>
+      {/* Premium Header Banner with Action */}
+      <View style={[styles.headerBanner, {backgroundColor: theme.card, borderBottomColor: theme.border}]}>
+        <View style={styles.headerInfo}>
+          <Text style={[styles.headerSubtitle, {color: theme.primary}]}>GIẢNG DẠY</Text>
+          <Text style={[styles.headerTitle, {color: theme.text}]}>Lớp Học Quản Lý</Text>
+        </View>
+        
+        <TouchableOpacity style={[styles.addButton, {backgroundColor: theme.primary}]} onPress={addCourse}>
+          <Icon name="plus" size={14} color="#FFF" style={styles.addIcon} />
+          <Text style={styles.addButtonText}>Tạo lớp</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.container}>
-        <Text style={styles.text1}>Các lớp của bạn</Text>
+
+      <View style={styles.listContainer}>
+        {isLoading && classes.length === 0 ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color={theme.primary} />
+            <Text style={[styles.loaderText, {color: theme.textSecondary}]}>Đang tải danh sách lớp học...</Text>
+          </View>
+        ) : classes.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <View style={[styles.emptyIconBg, {backgroundColor: theme.bgSecondary}]}>
+              <Icon name="university" size={48} color={theme.placeholder} />
+            </View>
+            <Text style={[styles.emptyTitle, {color: theme.text}]}>Chưa có lớp giảng dạy</Text>
+            <Text style={[styles.emptySubtitle, {color: theme.textSecondary}]}>
+              Hãy nhấn nút "Tạo lớp" ở phía trên để khởi tạo lớp học phần mới của bạn.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={classes}
+            renderItem={({item}) => <ClassCard classInfo={item} />}
+            keyExtractor={item => item.id.toString()}
+            contentContainerStyle={styles.flatListContent}
+            showsVerticalScrollIndicator={false}
+            ItemSeparatorComponent={() => <View style={{height: 4}} />}
+          />
+        )}
       </View>
-      <View style={styles.classList}>
-        <FlatList
-          data={classes}
-          renderItem={({item}) => <ClassCard classInfo={item} />}
-          keyExtractor={item => item.id.toString()}
-          ItemSeparatorComponent={() => <View style={{height: 10}} />}
-        />
-      </View>
+      
       <AddClassModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSubmit={handleAddClass}
       />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ECF0F1',
   },
-  text1: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    position: 'absolute',
-  },
-  classList: {
-    flex: 10,
-    width: '100%',
-    padding: 15,
-  },
-  activeBar: {
-    backgroundColor: '#ECF0F1',
-    flex: 1,
+  headerBanner: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerSubtitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
   },
   addButton: {
-    backgroundColor: '#34568B',
-    padding: 10,
-    borderRadius: 10,
-    width: '50%',
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    shadowColor: '#0F62FE',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  addIcon: {
+    marginRight: 6,
   },
   addButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  listContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  flatListContent: {
+    paddingBottom: 24,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 80,
+  },
+  loaderText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 80,
+  },
+  emptyIconBg: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
