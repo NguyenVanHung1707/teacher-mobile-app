@@ -210,7 +210,16 @@ export default function ClassDetail() {
       : false;
 
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => {
+          navigation.navigate('GradeSubmissionsList', {
+            assessmentId: item.id,
+            assessmentTitle: item.title,
+            isLocationRequired: item.isLocationRequired,
+          });
+        }}
+      >
         <View style={styles.cardHeader}>
           <Text style={[styles.badge, styles.typeBadge(item.type)]}>
             {item.type === 'QUIZ'
@@ -259,7 +268,7 @@ export default function ClassDetail() {
             </View>
           ) : null}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -446,6 +455,14 @@ export default function ClassDetail() {
         onSubmit={handlePhotoSubmit}
         studentList={studentList}
       />
+      {activeTab === 'assessment' && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('CreateAssessment', {courseId: classId})}
+        >
+          <Icon name="plus" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
     </>
   );
 }
@@ -638,5 +655,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     paddingHorizontal: 20,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#34568B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
 });

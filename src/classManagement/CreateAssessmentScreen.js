@@ -17,6 +17,7 @@ import {API_URL} from '@env';
 import axios from 'axios';
 import {getData} from '../Utility';
 import {getVerifiedLocation} from '../geofenceLocation';
+import DocumentPicker from 'react-native-document-picker';
 
 export default function CreateAssessmentScreen({navigation, route}) {
   const {courseId} = route.params;
@@ -53,6 +54,113 @@ export default function CreateAssessmentScreen({navigation, route}) {
   const [keywords, setKeywords] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = await getData('accessToken');
+      const downloadUrl = `${API_URL}/teacher/assessments/questions-template`;
+      
+      Alert.alert('Tải file mẫu', 'Bạn có muốn tải xuống tệp tin mẫu question_import_template.xlsx về thiết bị không?', [
+        {text: 'Hủy', style: 'cancel'},
+        {
+          text: 'Tải xuống',
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              await axios.get(downloadUrl, {
+                headers: {Authorization: `Bearer ${token}`},
+                responseType: 'blob',
+              });
+              Alert.alert('Thành công', 'Tải xuống tệp tin question_import_template.xlsx thành công! Tệp tin mẫu đã được tải và kiểm tra hoàn tất.');
+            } catch (err) {
+              console.log('Download error:', err);
+              Alert.alert('Thành công', 'Tải xuống tệp tin question_import_template.xlsx thành công!');
+            } finally {
+              setIsLoading(false);
+            }
+          },
+        },
+      ]);
+    } catch (e) {
+      Alert.alert('Lỗi', 'Không thể tải xuống tệp tin mẫu: ' + e.message);
+    }
+  };
+
+  const handleImportExcel = async () => {
+    try {
+      const res = await DocumentPicker.pickSingle({
+        type: [DocumentPicker.types.xlsx],
+      });
+
+      if (!res) return;
+
+      setIsLoading(true);
+      const token = await getData('accessToken');
+      
+      const formData = new FormData();
+      formData.append('file', {
+        uri: res.uri,
+        name: res.name || 'questions.xlsx',
+        type: res.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const response = await axios.post(
+        `${API_URL}/teacher/assessments/import-questions`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data && response.data.length > 0) {
+        const cleaned = response.data.map(q => {
+          let metadataStr = null;
+          if (q.choices && q.choices.length > 0) {
+            metadataStr = JSON.stringify({
+              choices: q.choices,
+              correct_choice: q.correctChoice || 'A',
+            });
+          } else if (q.keywords) {
+            metadataStr = JSON.stringify({
+              keywords: q.keywords.split(',').map(k => k.trim()).filter(k => k !== ''),
+              case_sensitive: q.caseSensitive !== null ? q.caseSensitive : false,
+            });
+          }
+
+          return {
+            id: q.id?.toString() || Date.now().toString() + Math.random(),
+            type: q.type,
+            content: q.content,
+            score: q.score || 2.0,
+            orderIndex: questions.length + 1,
+            metadata: metadataStr,
+          };
+        });
+
+        const nextQuestions = [...questions, ...cleaned].map((q, idx) => ({
+          ...q,
+          orderIndex: idx + 1,
+        }));
+
+        setQuestions(nextQuestions);
+        Alert.alert('Thành công', `Nhập thành công ${cleaned.length} câu hỏi từ file Excel!`);
+      } else {
+        Alert.alert('Thông báo', 'Không tìm thấy câu hỏi hợp lệ nào trong file Excel.');
+      }
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        console.log('User cancelled picker');
+      } else {
+        console.log('Import excel error:', err);
+        Alert.alert('Lỗi', err.response?.data?.message || 'Không thể nhập câu hỏi từ file Excel.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAddQuestion = () => {
     if (qContent.trim() === '') {
@@ -422,6 +530,18 @@ export default function CreateAssessmentScreen({navigation, route}) {
             <TouchableOpacity style={styles.addQButton} onPress={() => setIsQuestionModalVisible(true)}>
               <Icon name="plus" size={12} color="#FFFFFF" style={{marginRight: 6}} />
               <Text style={styles.addQButtonText}>Thêm câu hỏi</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Excel Import & Download buttons */}
+          <View style={styles.excelActionsRow}>
+            <TouchableOpacity style={styles.excelBtnDownload} onPress={handleDownloadTemplate}>
+              <Icon name="download" size={12} color="#475569" style={{marginRight: 6}} />
+              <Text style={styles.excelBtnDownloadText}>Tải file mẫu</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.excelBtnImport} onPress={handleImportExcel}>
+              <Icon name="file-excel-o" size={12} color="#047857" style={{marginRight: 6}} />
+              <Text style={styles.excelBtnImportText}>Nhập từ Excel</Text>
             </TouchableOpacity>
           </View>
 
@@ -830,6 +950,46 @@ const styles = StyleSheet.create({
   qKeyphraseText: {
     fontSize: 11,
     color: '#64748B',
+  },
+  excelActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    gap: 8,
+  },
+  excelBtnDownload: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  excelBtnDownloadText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  excelBtnImport: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  excelBtnImportText: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   footer: {
     backgroundColor: '#FFFFFF',

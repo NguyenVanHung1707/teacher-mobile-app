@@ -6,18 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  Alert,
-  Platform,
-  PermissionsAndroid,
   ActivityIndicator,
 } from 'react-native';
-import Geolocation from 'react-native-geolocation-service';
+import CheckBox from '@react-native-community/checkbox';
 import QuestionModal from './forms/QuestionModal';
 import QuestionCard from './QuestionCard';
 import UpdateQuestionModal from './forms/UpdateQuestionModal';
 import {getData} from '../Utility';
 import axios from 'axios';
 import {API_URL} from '@env';
+import {getVerifiedLocation} from '../geofenceLocation';
 
 const AddFormScreen = ({navigation}) => {
   const [hours, setHours] = useState('0');
@@ -33,8 +31,8 @@ const AddFormScreen = ({navigation}) => {
   const [codeForm, setCodeForm] = useState('');
   const [sessionNumber, setSessionNumber] = useState('');
 
-  const [latitude, setLatitude] = useState(null);
-  const [longitude, setLongitude] = useState(null);
+  const [isLocationRequired, setIsLocationRequired] = useState(false);
+  const [allowedRadiusMeters, setAllowedRadiusMeters] = useState('100');
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -71,6 +69,12 @@ const AddFormScreen = ({navigation}) => {
           setMinutes(
             Math.floor((response.data.timeOfPeriod % 3600) / 60).toString(),
           );
+          setIsLocationRequired(Boolean(response.data.isLocationRequired));
+          if (response.data.allowedRadiusMeters) {
+            setAllowedRadiusMeters(
+              response.data.allowedRadiusMeters.toString(),
+            );
+          }
         }
         if (response.data.questions) {
           console.log(response.data.questions);
@@ -135,51 +139,24 @@ const AddFormScreen = ({navigation}) => {
       })),
     }));
 
-    // Lấy tọa độ hiện tại
-    const getCurrentLocation = () => {
-      return new Promise((resolve, reject) => {
-        Geolocation.getCurrentPosition(
-          position => {
-            const {latitude, longitude} = position.coords;
-            resolve({latitude, longitude});
-          },
-          error => {
-            reject(error.message);
-          },
-          {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
-        );
-      });
-    };
-
     try {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          {
-            title: 'Yêu cầu quyền truy cập vị trí',
-            message:
-              'Ứng dụng cần quyền truy cập vị trí để lấy tọa độ địa lý hiện tại.',
-            buttonNeutral: 'Hỏi lại sau',
-            buttonNegative: 'Hủy bỏ',
-            buttonPositive: 'Đồng ý',
-          },
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          alert('Quyền truy cập vị trí bị từ chối.');
-          return;
-        }
+      const radius = parseInt(allowedRadiusMeters, 10);
+      if (isLocationRequired && (!radius || radius < 50 || radius > 500)) {
+        alert('Bán kính hợp lệ từ 50 đến 500 mét.');
+        setIsLoading(false);
+        return;
       }
 
-      const location = await getCurrentLocation();
-      setLatitude(location.latitude);
-      setLongitude(location.longitude);
+      const location = isLocationRequired ? await getVerifiedLocation() : null;
 
       let data = JSON.stringify({
         lectureNumber: sessionNumber,
         timeOfPeriod: expiryTime,
         questions: questionsDTO,
-        latitude: location.latitude, // Gửi latitude
-        longitude: location.longitude, // Gửi longitude
+        isLocationRequired,
+        allowedRadiusMeters: isLocationRequired ? radius : null,
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
       });
       console.log(data);
 
@@ -262,6 +239,27 @@ const AddFormScreen = ({navigation}) => {
             />
             <Text style={styles.timeLabel}>Phút</Text>
           </View>
+        </View>
+        <View style={styles.locationContainer}>
+          <View style={styles.locationToggleRow}>
+            <Text style={styles.label}>Yêu cầu kiểm tra vị trí</Text>
+            <CheckBox
+              value={isLocationRequired}
+              onValueChange={setIsLocationRequired}
+            />
+          </View>
+          {isLocationRequired ? (
+            <View style={styles.radiusContainer}>
+              <Text style={styles.radiusLabel}>Bán kính (m)</Text>
+              <TextInput
+                style={styles.radiusInput}
+                keyboardType="numeric"
+                value={allowedRadiusMeters}
+                onChangeText={setAllowedRadiusMeters}
+                placeholder="100"
+              />
+            </View>
+          ) : null}
         </View>
         <View style={styles.questionHeader}>
           <Text style={styles.label}>Danh sách câu hỏi</Text>
@@ -377,6 +375,31 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontSize: 16,
+  },
+  locationContainer: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 20,
+  },
+  locationToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  radiusContainer: {
+    marginTop: 10,
+  },
+  radiusLabel: {
+    fontSize: 14,
+    marginBottom: 6,
+  },
+  radiusInput: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
   },
   questionHeader: {
     flexDirection: 'row',

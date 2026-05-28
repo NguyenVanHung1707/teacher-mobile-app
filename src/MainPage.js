@@ -11,6 +11,10 @@ import ClassDiscussion from './classManagement/ClassDiscussion';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Import the icon library
 import HomePage from './HomePage';
 import ManagePermissions from './classManagement/ManagePermissions';
+import TimetableScreen from './classManagement/TimetableScreen'; // Import TimetableScreen
+import GradeSubmissionsListScreen from './classManagement/GradeSubmissionsListScreen';
+import GradeAssessmentScreen from './classManagement/GradeAssessmentScreen';
+import CreateAssessmentScreen from './classManagement/CreateAssessmentScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -52,6 +56,21 @@ const ClassManagementStack = () => {
         component={ManagePermissions}
         options={{headerShown: false}}
       />
+      <Stack.Screen
+        name="GradeSubmissionsList"
+        component={GradeSubmissionsListScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="GradeAssessment"
+        component={GradeAssessmentScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CreateAssessment"
+        component={CreateAssessmentScreen}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -67,6 +86,8 @@ export default function MainPage() {
             iconName = focused ? 'home' : 'home';
           } else if (route.name === 'Class management') {
             iconName = focused ? 'book' : 'book';
+          } else if (route.name === 'Lịch dạy') {
+            iconName = 'calendar';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'user' : 'user';
           }
@@ -78,7 +99,9 @@ export default function MainPage() {
       })}>
       <Tab.Screen name="Dashboard" component={HomeScreen} />
       <Tab.Screen name="Class management" component={ClassManagementStack} />
+      <Tab.Screen name="Lịch dạy" component={TimetableScreen} options={{headerShown: false}} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
+

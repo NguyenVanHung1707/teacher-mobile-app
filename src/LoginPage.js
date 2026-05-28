@@ -8,8 +8,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  useColorScheme,
 } from 'react-native';
-import {storeData, getData} from './Utility';
+import {storeData, getData, getThemeColors} from './Utility';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {
@@ -62,6 +63,9 @@ export default function LoginPage({navigation}) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const isDark = useColorScheme() === 'dark';
+  const theme = getThemeColors(isDark);
 
   const signIn = () => {
     if (!username || !username.trim() || !password || !password.trim()) {
@@ -168,167 +172,146 @@ export default function LoginPage({navigation}) {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={[styles.container, {backgroundColor: theme.bg}]} behavior="padding">
       <View style={styles.logoZone}>
-        <Text style={styles.logoText}>Welcome</Text>
+        <Text style={[styles.logoText, {color: theme.text}]}>BKHN</Text>
+        <Text style={[styles.subLogoText, {color: theme.primary}]}>Teacher Portal</Text>
       </View>
       <View style={styles.signInZone}>
         <View style={styles.inputContainer}>
           <TextInput
-            style={styles.textInput}
-            placeholder="Your Email"
+            style={[styles.textInput, {backgroundColor: theme.inputBg, color: theme.inputText, borderColor: theme.border}]}
+            placeholder="Your Email / Username"
             value={username}
             onChangeText={val => setUsername(val)}
-            placeholderTextColor="#C7C7CD"
+            placeholderTextColor={theme.placeholder}
             autoCapitalize="none"
           />
         </View>
         <View style={styles.inputContainer}>
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, {backgroundColor: theme.inputBg, color: theme.inputText, borderColor: theme.border}]}
             placeholder="Password"
             secureTextEntry={true}
             value={password}
             onChangeText={val => setPassword(val)}
-            placeholderTextColor="#C7C7CD"
+            placeholderTextColor={theme.placeholder}
             autoCapitalize="none"
           />
         </View>
       </View>
       <View style={styles.bottomZone}>
-        <View style={styles.row1Bot}>
-          <View style={styles.nothing}>
-            {isLoading && <ActivityIndicator size="large" color="#8A4C7D" />}
-          </View>
-          <View style={styles.signInButtonView}>
-            <TouchableOpacity
-              style={styles.arrowButton}
-              onPress={() => signIn()}
-              disabled={isLoading}>
-              <Text style={styles.arrowText}>&rarr;</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <TouchableOpacity
+          style={[styles.primaryButton, {backgroundColor: theme.primary}, isLoading && styles.disabledButton]}
+          onPress={() => signIn()}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.primaryButtonText}>ĐĂNG NHẬP SSO</Text>
+          )}
+        </TouchableOpacity>
+
         <View style={styles.row2Bot}>
           <TouchableOpacity
             style={styles.signUp}
             onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.signUpText}>Sign Up</Text>
+            <Text style={[styles.signUpText, {color: theme.secondary}]}>Sign Up</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.nothing1}></TouchableOpacity>
           <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.signUpText}>Forgot Password</Text>
+            <Text style={[styles.signUpText, {color: theme.textSecondary}]}>Forgot Password</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FEABAE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoZone: {
-    flex: 396,
+    flex: 3,
     justifyContent: 'center',
     width: '80%',
     paddingLeft: 10,
   },
   logoText: {
-    color: '#FFFFFF',
-    fontSize: 50,
-    fontWeight: 'bold',
-    fontFamily: 'Futura Hv Bt',
+    fontSize: 48,
+    fontWeight: '800',
+    fontFamily: 'System',
+    letterSpacing: -1,
+  },
+  subLogoText: {
+    fontSize: 32,
+    fontWeight: '800',
+    fontFamily: 'System',
+    marginTop: -5,
   },
   signInZone: {
-    flex: 140,
+    flex: 2,
     width: '80%',
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: 10,
-  },
-  inputSignIn: {
-    margin: '0 10px 0 0',
+    justifyContent: 'center',
   },
   textInput: {
-    height: 60,
-    width: 303,
-    padding: 10,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    borderColor: '#ccc',
+    height: 55,
+    width: '100%',
+    paddingHorizontal: 15,
+    borderRadius: 8,
     borderWidth: 1,
+    fontSize: 15,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   bottomZone: {
-    flex: 336,
-    justifyContent: 'center',
-    //backgroundColor: "#4C525C",
+    flex: 3,
+    justifyContent: 'flex-start',
     width: '80%',
+    marginTop: 20,
   },
-  row1Bot: {
-    flex: 5,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 50,
+  primaryButton: {
+    width: '100%',
+    height: 55,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  disabledButton: {
+    opacity: 0.8,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   row2Bot: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    //
-  },
-  nothing: {
-    flex: 239,
-  },
-  signInButtonView: {
-    flex: 64,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  arrowButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 64,
-    backgroundColor: '#8A4C7D',
-    alignItems: 'center',
-    justifyContent: 'center',
-    display: 'flex',
-  },
-  arrowText: {
-    fontSize: 40,
-    color: '#fff',
-    position: 'absolute',
-    top: -2,
-    left: 12,
-    right: 0,
-    bottom: 20,
+    marginTop: 24,
+    paddingHorizontal: 5,
   },
   signUp: {
-    flex: 68,
-    // backgroundColor: "#E4DB7C",
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nothing1: {
-    flex: 75,
-  },
   forgotPassword: {
-    flex: 151,
-    //backgroundColor: "#E4DB7C",
     alignItems: 'center',
     justifyContent: 'center',
   },
   signUpText: {
-    color: '#000000',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
-    fontFamily: 'Futura Hv Bt',
+    fontFamily: 'System',
   },
 });
