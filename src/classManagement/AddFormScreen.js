@@ -33,6 +33,7 @@ const AddFormScreen = ({navigation}) => {
 
   const [isLocationRequired, setIsLocationRequired] = useState(false);
   const [allowedRadiusMeters, setAllowedRadiusMeters] = useState('100');
+  const [isFaceVerificationRequired, setIsFaceVerificationRequired] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,6 +71,7 @@ const AddFormScreen = ({navigation}) => {
             Math.floor((response.data.timeOfPeriod % 3600) / 60).toString(),
           );
           setIsLocationRequired(Boolean(response.data.isLocationRequired));
+          setIsFaceVerificationRequired(Boolean(response.data.isFaceVerificationRequired));
           if (response.data.allowedRadiusMeters) {
             setAllowedRadiusMeters(
               response.data.allowedRadiusMeters.toString(),
@@ -157,6 +159,7 @@ const AddFormScreen = ({navigation}) => {
         allowedRadiusMeters: isLocationRequired ? radius : null,
         latitude: location?.latitude || null,
         longitude: location?.longitude || null,
+        isFaceVerificationRequired,
       });
       console.log(data);
 
@@ -260,6 +263,15 @@ const AddFormScreen = ({navigation}) => {
               />
             </View>
           ) : null}
+        </View>
+        <View style={styles.locationContainer}>
+          <View style={styles.locationToggleRow}>
+            <Text style={styles.label}>Yêu cầu kiểm tra khuôn mặt sinh viên</Text>
+            <CheckBox
+              value={isFaceVerificationRequired}
+              onValueChange={setIsFaceVerificationRequired}
+            />
+          </View>
         </View>
         <View style={styles.questionHeader}>
           <Text style={styles.label}>Danh sách câu hỏi</Text>
