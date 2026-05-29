@@ -11,16 +11,20 @@ import {
   ScrollView,
   Modal,
   Switch,
+  useColorScheme,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {API_URL} from '@env';
 import axios from 'axios';
-import {getData} from '../Utility';
+import {getData, getThemeColors} from '../Utility';
 import {getVerifiedLocation} from '../geofenceLocation';
 import DocumentPicker from 'react-native-document-picker';
 
 export default function CreateAssessmentScreen({navigation, route}) {
   const {courseId} = route.params;
+
+  const isDark = useColorScheme() === 'dark';
+  const colors = getThemeColors(isDark);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -388,51 +392,59 @@ export default function CreateAssessmentScreen({navigation, route}) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.bg}]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, {backgroundColor: colors.card, borderBottomColor: colors.border}]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="chevron-left" size={18} color="#2C3E50" />
+          <Icon name="chevron-left" size={18} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tạo bài đánh giá nhanh</Text>
+        <Text style={[styles.headerTitle, {color: colors.text}]}>Tạo bài đánh giá nhanh</Text>
       </View>
 
       <ScrollView style={styles.formContainer} contentContainerStyle={styles.formContent}>
         {/* Core details */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Thông tin cơ bản</Text>
+        <View style={[styles.card, {backgroundColor: colors.card, borderColor: colors.border}]}>
+          <Text style={[styles.sectionTitle, {color: colors.primary}]}>Thông tin cơ bản</Text>
           
-          <Text style={styles.inputLabel}>Tiêu đề bài kiểm tra</Text>
+          <Text style={[styles.inputLabel, {color: colors.textSecondary}]}>Tiêu đề bài kiểm tra</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, {backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.inputText}]}
             placeholder="Nhập tiêu đề (Ví dụ: Kiểm tra giữa kỳ, Lab 2, ...)"
             value={title}
             onChangeText={setTitle}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.placeholder}
           />
 
-          <Text style={styles.inputLabel}>Mô tả / Hướng dẫn</Text>
+          <Text style={[styles.inputLabel, {color: colors.textSecondary}]}>Mô tả / Hướng dẫn</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, {backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.inputText}]}
             placeholder="Nhập nội dung hướng dẫn làm bài..."
             multiline
             numberOfLines={3}
             value={description}
             onChangeText={setDescription}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.placeholder}
           />
 
           <View style={styles.row}>
             <View style={{flex: 1, marginRight: 8}}>
-              <Text style={styles.inputLabel}>Loại bài thi</Text>
+              <Text style={[styles.inputLabel, {color: colors.textSecondary}]}>Loại bài thi</Text>
               <View style={styles.pickerReplacement}>
                 {['QUIZ', 'MID_TERM', 'FINAL_EXAM', 'ASSIGNMENT'].map(t => (
                   <TouchableOpacity
                     key={t}
-                    style={[styles.typeOptionBtn, type === t && styles.typeOptionBtnSelected]}
+                    style={[
+                      styles.typeOptionBtn,
+                      {backgroundColor: colors.bgSecondary, borderColor: colors.border},
+                      type === t && {backgroundColor: colors.primary, borderColor: colors.primary}
+                    ]}
                     onPress={() => setType(t)}
                   >
-                    <Text style={[styles.typeOptionText, type === t && styles.typeOptionTextSelected]}>
+                    <Text style={[
+                      styles.typeOptionText,
+                      {color: colors.textSecondary},
+                      type === t && {color: '#ffffff', fontWeight: 'bold'}
+                    ]}>
                       {t === 'QUIZ' ? 'Trắc nghiệm' : t === 'MID_TERM' ? 'Giữa kỳ' : t === 'FINAL_EXAM' ? 'Cuối kỳ' : 'Bài tập'}
                     </Text>
                   </TouchableOpacity>
@@ -443,44 +455,44 @@ export default function CreateAssessmentScreen({navigation, route}) {
 
           <View style={styles.row}>
             <View style={{flex: 1, marginRight: 8}}>
-              <Text style={styles.inputLabel}>Thời gian làm (phút)</Text>
+              <Text style={[styles.inputLabel, {color: colors.textSecondary}]}>Thời gian làm (phút)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, {backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.inputText}]}
                 keyboardType="numeric"
                 value={durationMinutes}
                 onChangeText={setDurationMinutes}
                 placeholder="45"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
             <View style={{flex: 1}}>
-              <Text style={styles.inputLabel}>Hạn nộp bài (số ngày)</Text>
+              <Text style={[styles.inputLabel, {color: colors.textSecondary}]}>Hạn nộp bài (số ngày)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, {backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.inputText}]}
                 keyboardType="numeric"
                 value={deadlineDays}
                 onChangeText={setDeadlineDays}
                 placeholder="7"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
           </View>
 
           <View style={styles.row}>
             <View style={{flex: 1, marginRight: 8}}>
-              <Text style={styles.inputLabel}>Điểm tối đa đề</Text>
+              <Text style={[styles.inputLabel, {color: colors.textSecondary}]}>Điểm tối đa đề</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, {backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.inputText}]}
                 keyboardType="numeric"
                 value={maxScore}
                 onChangeText={setMaxScore}
                 placeholder="10"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
             <View style={{flex: 1, justifyContent: 'center', paddingTop: 14}}>
               <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>Công bố ngay</Text>
+                <Text style={[styles.switchLabel, {color: colors.text}]}>Công bố ngay</Text>
                 <Switch value={isPublished} onValueChange={setIsPublished} />
               </View>
             </View>
@@ -488,46 +500,46 @@ export default function CreateAssessmentScreen({navigation, route}) {
         </View>
 
         {/* Location Security */}
-        <View style={styles.card}>
+        <View style={[styles.card, {backgroundColor: colors.card, borderColor: colors.border}]}>
           <View style={styles.switchRow}>
             <View>
-              <Text style={styles.sectionTitle}>Bảo mật vị trí lớp học</Text>
-              <Text style={styles.switchDesc}>Chỉ cho phép làm bài khi ở gần giáo viên</Text>
+              <Text style={[styles.sectionTitle, {color: colors.primary, marginBottom: 4}]}>Bảo mật vị trí lớp học</Text>
+              <Text style={[styles.switchDesc, {color: colors.textSecondary}]}>Chỉ cho phép làm bài khi ở gần giáo viên</Text>
             </View>
             <Switch value={isLocationRequired} onValueChange={setIsLocationRequired} />
           </View>
 
           {isLocationRequired && (
             <View style={styles.radiusBlock}>
-              <Text style={styles.inputLabel}>Bán kính cho phép (mét)</Text>
+              <Text style={[styles.inputLabel, {color: colors.textSecondary}]}>Bán kính cho phép (mét)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, {backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.inputText}]}
                 keyboardType="numeric"
                 value={allowedRadiusMeters}
                 onChangeText={setAllowedRadiusMeters}
                 placeholder="100"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
           )}
         </View>
 
         {/* Camera Security */}
-        <View style={styles.card}>
+        <View style={[styles.card, {backgroundColor: colors.card, borderColor: colors.border}]}>
           <View style={styles.switchRow}>
             <View style={{flex: 1, paddingRight: 10}}>
-              <Text style={styles.sectionTitle}>Yêu cầu camera (AI giám sát)</Text>
-              <Text style={styles.switchDesc}>Sinh viên phải bật camera giám sát góc nhìn khi thi</Text>
+              <Text style={[styles.sectionTitle, {color: colors.primary, marginBottom: 4}]}>Yêu cầu camera (AI giám sát)</Text>
+              <Text style={[styles.switchDesc, {color: colors.textSecondary}]}>Sinh viên phải bật camera giám sát góc nhìn khi thi</Text>
             </View>
             <Switch value={isCameraRequired} onValueChange={setIsCameraRequired} />
           </View>
         </View>
 
         {/* Questions Block */}
-        <View style={styles.card}>
+        <View style={[styles.card, {backgroundColor: colors.card, borderColor: colors.border}]}>
           <View style={styles.questionsHeaderRow}>
-            <Text style={styles.sectionTitle}>Danh sách câu hỏi ({questions.length})</Text>
-            <TouchableOpacity style={styles.addQButton} onPress={() => setIsQuestionModalVisible(true)}>
+            <Text style={[styles.sectionTitle, {color: colors.primary, marginBottom: 0}]}>Danh sách câu hỏi ({questions.length})</Text>
+            <TouchableOpacity style={[styles.addQButton, {backgroundColor: colors.primary}]} onPress={() => setIsQuestionModalVisible(true)}>
               <Icon name="plus" size={12} color="#FFFFFF" style={{marginRight: 6}} />
               <Text style={styles.addQButtonText}>Thêm câu hỏi</Text>
             </TouchableOpacity>
@@ -535,20 +547,20 @@ export default function CreateAssessmentScreen({navigation, route}) {
 
           {/* Excel Import & Download buttons */}
           <View style={styles.excelActionsRow}>
-            <TouchableOpacity style={styles.excelBtnDownload} onPress={handleDownloadTemplate}>
-              <Icon name="download" size={12} color="#475569" style={{marginRight: 6}} />
-              <Text style={styles.excelBtnDownloadText}>Tải file mẫu</Text>
+            <TouchableOpacity style={[styles.excelBtnDownload, {backgroundColor: colors.bgSecondary, borderColor: colors.border}]} onPress={handleDownloadTemplate}>
+              <Icon name="download" size={12} color={colors.textSecondary} style={{marginRight: 6}} />
+              <Text style={[styles.excelBtnDownloadText, {color: colors.textSecondary}]}>Tải file mẫu</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.excelBtnImport} onPress={handleImportExcel}>
+            <TouchableOpacity style={[styles.excelBtnImport, {backgroundColor: isDark ? '#04785715' : '#ECFDF5', borderColor: isDark ? '#04785740' : '#A7F3D0'}]} onPress={handleImportExcel}>
               <Icon name="file-excel-o" size={12} color="#047857" style={{marginRight: 6}} />
-              <Text style={styles.excelBtnImportText}>Nhập từ Excel</Text>
+              <Text style={[styles.excelBtnImportText, {color: '#047857'}]}>Nhập từ Excel</Text>
             </TouchableOpacity>
           </View>
 
           {questions.length === 0 ? (
             <View style={styles.emptyQuestionsContainer}>
-              <Icon name="question-circle-o" size={40} color="#CBD5E1" />
-              <Text style={styles.emptyQuestionsText}>Chưa có câu hỏi nào. Tự luận/Điểm danh không bắt buộc thêm câu hỏi.</Text>
+              <Icon name="question-circle-o" size={40} color={colors.placeholder} />
+              <Text style={[styles.emptyQuestionsText, {color: colors.textSecondary}]}>Chưa có câu hỏi nào. Tự luận/Điểm danh không bắt buộc thêm câu hỏi.</Text>
             </View>
           ) : (
             <FlatList
@@ -563,8 +575,8 @@ export default function CreateAssessmentScreen({navigation, route}) {
       </ScrollView>
 
       {/* Footer create button */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.submitBtn} onPress={handleCreateAssessment}>
+      <View style={[styles.footer, {backgroundColor: colors.card, borderTopColor: colors.border}]}>
+        <TouchableOpacity style={[styles.submitBtn, {backgroundColor: colors.primary}]} onPress={handleCreateAssessment}>
           <Text style={styles.submitBtnText}>Tạo bài đánh giá nhanh</Text>
         </TouchableOpacity>
       </View>
@@ -712,9 +724,9 @@ export default function CreateAssessmentScreen({navigation, route}) {
       </Modal>
 
       {isLoading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#34568B" />
-          <Text style={{color: '#34568B', marginTop: 10, fontWeight: 'bold'}}>
+        <View style={[styles.loadingContainer, {backgroundColor: colors.bg}]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{color: colors.primary, marginTop: 10, fontWeight: 'bold'}}>
             Đang đồng bộ và khởi tạo bài kiểm tra...
           </Text>
         </View>

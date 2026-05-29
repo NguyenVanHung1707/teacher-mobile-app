@@ -6,13 +6,20 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  useColorScheme,
+  TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import {API_BASE_URL} from './config';
-import {formatToDate} from './Utility';
+import {formatToDate, getThemeColors} from './Utility';
 
 const ProfileScreen = () => {
+  const isDark = useColorScheme() === 'dark';
+  const colors = getThemeColors(isDark);
+  const navigation = useNavigation();
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,48 +58,47 @@ const ProfileScreen = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#8A4C7D" />
-        <Text style={styles.loadingText}>Đang tải thông tin hồ sơ...</Text>
+      <View style={[styles.center, {backgroundColor: colors.bg}]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, {color: colors.primary}]}>Đang tải thông tin hồ sơ...</Text>
       </View>
     );
   }
 
   if (error || !profile) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error || 'Đã có lỗi xảy ra!'}</Text>
+      <View style={[styles.center, {backgroundColor: colors.bg}]}>
+        <Text style={[styles.errorText, {color: '#ef4444'}]}>{error || 'Đã có lỗi xảy ra!'}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={{uri: 'https://www.bootdey.com/image/900x400/8A4C7D/ffffff'}}
-        style={styles.coverImage}
-      />
+    <View style={[styles.container, {backgroundColor: colors.bg}]}>
+      {/* Dynamic cover block */}
+      <View style={[styles.coverImage, {backgroundColor: colors.primary}]} />
+      
       <View style={styles.avatarContainer}>
-        <View style={styles.avatarPlaceholder}>
+        <View style={[styles.avatarPlaceholder, {backgroundColor: colors.secondary, borderColor: colors.card}]}>
           <Text style={styles.avatarText}>
             {profile.name?.charAt(0)?.toUpperCase() || 'GV'}
           </Text>
         </View>
-        <Text style={[styles.name, styles.textWithShadow]}>
+        <Text style={[styles.name, {color: colors.text}]}>
           {profile.name}
         </Text>
-        <Text style={styles.codeSubtitle}>
+        <Text style={[styles.codeSubtitle, {color: colors.textSecondary}]}>
           Mã số GV: {profile.teacherCode}
         </Text>
       </View>
       <View style={styles.content}>
-        <View style={styles.infoCard}>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Địa chỉ Email:</Text>
-            <Text style={styles.infoValue}>{profile.email || 'Chưa cập nhật'}</Text>
+        <View style={[styles.infoCard, {backgroundColor: colors.card, borderColor: colors.border}]}>
+          <View style={[styles.infoContainer, {borderBottomColor: colors.border}]}>
+            <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Địa chỉ Email:</Text>
+            <Text style={[styles.infoValue, {color: colors.text}]}>{profile.email || 'Chưa cập nhật'}</Text>
           </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Trạng thái tài khoản:</Text>
+          <View style={[styles.infoContainer, {borderBottomColor: colors.border}]}>
+            <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Trạng thái tài khoản:</Text>
             <Text style={[
               styles.infoValue, 
               styles.statusText,
@@ -101,12 +107,20 @@ const ProfileScreen = () => {
               {profile.accountStatus === 'APPROVED' ? 'Đã kích hoạt' : profile.accountStatus}
             </Text>
           </View>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Ngày đăng ký tài khoản:</Text>
-            <Text style={styles.infoValue}>
+          <View style={[styles.infoContainer, {borderBottomColor: colors.border, paddingBottom: 12}]}>
+            <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Ngày đăng ký tài khoản:</Text>
+            <Text style={[styles.infoValue, {color: colors.text}]}>
               {profile.createdAt ? formatToDate(profile.createdAt) : 'Không có dữ liệu'}
             </Text>
           </View>
+
+          <TouchableOpacity
+            style={[styles.changePasswordBtn, {backgroundColor: colors.primary}]}
+            onPress={() => navigation.navigate('ChangePassword')}
+          >
+            <Icon name="key" size={14} color="#FFF" style={styles.btnIcon} />
+            <Text style={styles.changePasswordBtnText}>ĐỔI MẬT KHẨU TÀI KHOẢN</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -224,7 +238,31 @@ const styles = StyleSheet.create({
   statusPending: {
     color: '#f59e0b',
   },
+  changePasswordBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 10,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  btnIcon: {
+    marginRight: 2,
+  },
+  changePasswordBtnText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
 });
 
 export default ProfileScreen;
+
 

@@ -5,12 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Import the icon library
 
-import {getData, storeData} from '../Utility';
+import {getData, storeData, getThemeColors} from '../Utility';
 import axios from 'axios';
 import {API_URL} from '@env';
 import AttendanceFormModal from './forms/AttendanceFormModal';
@@ -18,6 +19,8 @@ import {convertTime, formatToView} from '../Utility';
 import ConfirmDeleteStudentModal from './forms/ConfirmDeleteStudentModal'; // Import the new modal
 
 export default function StudentDetail() {
+  const isDark = useColorScheme() === 'dark';
+  const colors = getThemeColors(isDark);
   const Separator = () => <View style={{height: 10}} />;
   const navigation = useNavigation();
 
@@ -140,52 +143,52 @@ export default function StudentDetail() {
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.card}>
+      <View style={[styles.container, {backgroundColor: colors.bg, flex: 0, paddingBottom: 0}]}>
+        <View style={[styles.card, {backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1}]}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Mã sinh viên:</Text>
-            <Text style={styles.infoValue}>{studentCode}</Text>
+            <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Mã sinh viên:</Text>
+            <Text style={[styles.infoValue, {color: colors.text}]}>{studentCode}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Họ và tên:</Text>
-            <Text style={styles.infoValue}>{studentName}</Text>
+            <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Họ và tên:</Text>
+            <Text style={[styles.infoValue, {color: colors.text}]}>{studentName}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Số buổi vắng:</Text>
-            <Text style={styles.infoValue}>{studentNumberOfAbsent}</Text>
+            <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Số buổi vắng:</Text>
+            <Text style={[styles.infoValue, {color: '#EF4444', fontWeight: 'bold'}]}>{studentNumberOfAbsent}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Số buổi đi:</Text>
-            <Text style={styles.infoValue}>{studentNumberOfPresent}</Text>
+            <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Số buổi đi:</Text>
+            <Text style={[styles.infoValue, {color: '#10B981', fontWeight: 'bold'}]}>{studentNumberOfPresent}</Text>
           </View>
         </View>
       </View>
-      <View style={styles.activeBar}>
+      <View style={[styles.activeBar, {backgroundColor: colors.bg}]}>
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, {backgroundColor: colors.primary}]}
             onPress={() => setModalVisible(true)}>
             <Text style={styles.addButtonText}>Tạo buổi điểm danh</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, {backgroundColor: '#EF4444'}]}
             onPress={() => setDeleteModalVisible(true)}>
             <Text style={styles.addButtonText}>Xóa sinh viên khỏi lớp</Text>
           </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.containerHeader}>
-        <Text style={styles.header}>Thông tin điểm danh sinh viên</Text>
+      <View style={[styles.containerHeader, {backgroundColor: colors.bg, paddingVertical: 10}]}>
+        <Text style={[styles.header, {color: colors.text, marginBottom: 0}]}>Thông tin điểm danh sinh viên</Text>
       </View>
-      <View style={styles.test1}>
+      <View style={[styles.test1, {backgroundColor: colors.bg}]}>
         <FlatList
           data={studentLogs}
           renderItem={({item}) => (
-            <View style={styles.card}>
+            <View style={[styles.card, {backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1}]}>
               <View style={styles.infoRow}>
                 <View>
-                  <Text style={styles.infoLabel}>Thời gian điểm danh:</Text>
-                  <Text style={styles.infoValue}>
+                  <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Thời gian điểm danh:</Text>
+                  <Text style={[styles.infoValue, {color: colors.text}]}>
                     {formatToView(convertTime(item.attendanceTime))}
                   </Text>
                 </View>
@@ -193,23 +196,23 @@ export default function StudentDetail() {
                   onPress={() =>
                     handleDeleteAttendance(item.id, item.isAttendance)
                   }>
-                  <Icon name="trash" size={24} color="#FF0000" />
+                  <Icon name="trash" size={24} color="#EF4444" />
                 </TouchableOpacity>
               </View>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Buổi học số:</Text>
-                <Text style={styles.infoValue}>{item.lectureNumber}</Text>
+                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Buổi học số:</Text>
+                <Text style={[styles.infoValue, {color: colors.text}]}>{item.lectureNumber}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Đi/Vắng:</Text>
-                <Text style={styles.infoValue}>
-                  {item.isAttendance ? 'Đi' : 'Vắng'}
+                <Text style={[styles.infoLabel, {color: colors.textSecondary}]}>Đi/Vắng:</Text>
+                <Text style={[styles.infoValue, {color: item.isAttendance ? '#10B981' : '#EF4444', fontWeight: 'bold'}]}>
+                  {item.isAttendance ? 'Đi học' : 'Vắng mặt'}
                 </Text>
               </View>
             </View>
           )}
           keyExtractor={item => item.id.toString()}
-          contentContainerStyle={{padding: 20}}
+          contentContainerStyle={{padding: 20, paddingTop: 10}}
           ItemSeparatorComponent={Separator}
         />
       </View>
