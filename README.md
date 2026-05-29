@@ -27,7 +27,7 @@
 *   **Cấu hình đề thi di động**: Giảng viên có thể thiết lập các bài kiểm tra trực tuyến trực quan ngay trên điện thoại:
     *   Nhập tên đề thi, cấu hình thời gian thi và hạn nộp bài.
     *   **Bật/tắt bảo mật vị trí GPS**: Yêu cầu học viên phải ở đúng tọa độ phòng thi mới được làm bài.
-    *   **Bật/tắt giám sát Camera AI**: Yêu cầu học viên bật camera để AI phát hiện các hành vi gian lận (quay đầu, thiết bị lạ,...) thời gian thực.
+    *   **Bật/tắt giám sát Camera AI**: Yêu cầu học viên bật camera để AI tự động phát hiện và cảnh báo các hành vi vi phạm quy chế thi (quay đầu sang hai bên, liếc nhìn rời khỏi màn hình làm bài, hoặc vắng mặt trước camera) thời gian thực.
 *   **Mẫu tệp câu hỏi**: Các nút xem tệp mẫu câu hỏi trắc nghiệm/tự luận được thiết kế sắc nét, hỗ trợ tối đa việc soạn đề.
 
 ### 6. Hồ Sơ Cá Nhân & Quản Lý Đổi Mật Khẩu
