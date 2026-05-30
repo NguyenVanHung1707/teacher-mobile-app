@@ -104,15 +104,18 @@ export default function SignUpPage({navigation}) {
           );
           return;
         }
-        //ask user to do you want to login now
-        Alert.alert('Đăng ký thành công', 'Bạn có muốn đăng nhập ngay bây giờ?', [
-          {
-            text: 'Không',
-            onPress: () => console.log('No Pressed'),
-            style: 'cancel',
-          },
-          {text: 'Có', onPress: () => navigation.navigate('Login')},
-        ]);
+        // Show pending approval warning and navigate back to Login
+        Alert.alert(
+          'Đăng ký thành công',
+          'Tài khoản giảng viên của bạn đã được tạo thành công. Vui lòng chờ Quản trị viên (Admin) phê duyệt tài khoản trước khi đăng nhập!',
+          [
+            {
+              text: 'Quay lại đăng nhập',
+              onPress: () => navigation.navigate('Login'),
+            },
+          ],
+          {cancelable: false},
+        );
       })
       .catch(error => console.error(error));
   };
