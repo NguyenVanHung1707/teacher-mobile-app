@@ -9,6 +9,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Linking,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -20,17 +22,76 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 export default function GradeAssessmentScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const {submissionId, studentName, assessmentTitle, assessmentId} = route.params;
+  const {submissionId, studentName, assessmentTitle, assessmentId} =
+    route.params;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submission, setSubmission] = useState(null);
   const [assessment, setAssessment] = useState(null);
-  
+
   // Grading state
   const [questionGrades, setQuestionGrades] = useState({}); // questionId -> { score: number, comment: string }
   const [overallFeedback, setOverallFeedback] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  // AI Proctoring logs states
+  const [isProctorLogsOpen, setIsProctorLogsOpen] = useState(false);
+  const [proctorLogs, setProctorLogs] = useState([]);
+  const [isProctorLogsLoading, setIsProctorLogsLoading] = useState(false);
+
+  const handleOpenProctorLogs = async () => {
+    if (!submission) {
+      return;
+    }
+    setIsProctorLogsOpen(true);
+    setIsProctorLogsLoading(true);
+    try {
+      const token = await getData('accessToken');
+      const headers = {Authorization: `Bearer ${token}`};
+      const examId = assessmentId;
+      const studentCode = submission.studentCode || submission.studentId;
+
+      const response = await axios.get(
+        `${API_URL}/proctor/violations?examId=${examId}&studentId=${studentCode}`,
+        {headers},
+      );
+
+      if (response.data && response.data.logs) {
+        setProctorLogs(response.data.logs);
+      } else {
+        setProctorLogs([]);
+      }
+    } catch (error) {
+      console.log('Error fetching proctor logs:', error);
+      Alert.alert('Lỗi', 'Không thể tải nhật ký AI giám thị!');
+      setProctorLogs([]);
+    } finally {
+      setIsProctorLogsLoading(false);
+    }
+  };
+
+  const playViolationVideo = async videoUrl => {
+    if (!videoUrl) {
+      return;
+    }
+    try {
+      const relativePath = videoUrl.startsWith('/api')
+        ? videoUrl.substring(4)
+        : videoUrl;
+      const fullUrl = `${API_URL}${relativePath}`;
+
+      const supported = await Linking.canOpenURL(fullUrl);
+      if (supported) {
+        await Linking.openURL(fullUrl);
+      } else {
+        Alert.alert('Lỗi', 'Không thể mở trình phát video trên thiết bị.');
+      }
+    } catch (error) {
+      console.log('Error opening video:', error);
+      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi phát video bằng chứng.');
+    }
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -42,10 +103,10 @@ export default function GradeAssessmentScreen() {
       // 1. Fetch submission list to get answers
       const subsResponse = await axios.get(
         `${API_URL}/teacher/assessments/${assessmentId}/submissions`,
-        {headers}
+        {headers},
       );
       const sub = subsResponse.data.find(s => s.id === submissionId);
-      
+
       if (!sub) {
         throw new Error('Không tìm thấy bài nộp của sinh viên');
       }
@@ -55,7 +116,7 @@ export default function GradeAssessmentScreen() {
       // 2. Fetch original assessment questions & keys
       const assessResponse = await axios.get(
         `${API_URL}/courses/${classId}/assessments`,
-        {headers}
+        {headers},
       );
       const matchAssess = assessResponse.data.find(a => a.id === assessmentId);
       if (!matchAssess) {
@@ -68,7 +129,7 @@ export default function GradeAssessmentScreen() {
       matchAssess.questions?.forEach(q => {
         // Find existing graded answer
         const existingAns = sub.answers?.find(a => a.questionId === q.id);
-        
+
         // Auto-grade calculation fallback if score is null
         let defaultScore = 0;
         if (existingAns) {
@@ -78,7 +139,9 @@ export default function GradeAssessmentScreen() {
             // Check if correct
             try {
               const meta = JSON.parse(q.metadata || '{}');
-              const isCorrect = meta.correct_choice?.toLowerCase() === existingAns.selectedChoice?.toLowerCase();
+              const isCorrect =
+                meta.correct_choice?.toLowerCase() ===
+                existingAns.selectedChoice?.toLowerCase();
               defaultScore = isCorrect ? q.score : 0;
             } catch (e) {
               defaultScore = 0;
@@ -87,7 +150,9 @@ export default function GradeAssessmentScreen() {
             try {
               const meta = JSON.parse(q.metadata || '{}');
               const isCorrect = meta.keywords?.some(
-                kw => kw.trim().toLowerCase() === existingAns.answerText?.trim().toLowerCase()
+                kw =>
+                  kw.trim().toLowerCase() ===
+                  existingAns.answerText?.trim().toLowerCase(),
               );
               defaultScore = isCorrect ? q.score : 0;
             } catch (e) {
@@ -102,7 +167,6 @@ export default function GradeAssessmentScreen() {
         };
       });
       setQuestionGrades(initialGrades);
-
     } catch (error) {
       console.log('Error loading grading space:', error);
       Alert.alert('Lỗi', error.message || 'Không thể tải không gian chấm thi!');
@@ -120,7 +184,7 @@ export default function GradeAssessmentScreen() {
     // Basic validation for float/double numbers
     const cleanVal = val.replace(/[^0-9.]/g, '');
     const num = parseFloat(cleanVal);
-    
+
     if (num > maxScore) {
       Alert.alert('Cảnh báo', `Điểm tối đa của câu hỏi này là ${maxScore}đ`);
       setQuestionGrades(prev => ({
@@ -175,7 +239,7 @@ export default function GradeAssessmentScreen() {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       if (response.status === 200) {
@@ -184,7 +248,10 @@ export default function GradeAssessmentScreen() {
       }
     } catch (error) {
       console.log('Error submitting grades:', error);
-      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể gửi kết quả chấm thi.');
+      Alert.alert(
+        'Lỗi',
+        error.response?.data?.message || 'Không thể gửi kết quả chấm thi.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -194,24 +261,29 @@ export default function GradeAssessmentScreen() {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#34568B" />
-        <Text style={styles.loadingText}>Đang chuẩn bị bài làm sinh viên...</Text>
+        <Text style={styles.loadingText}>
+          Đang chuẩn bị bài làm sinh viên...
+        </Text>
       </View>
     );
   }
 
   const questions = assessment.questions || [];
   const currentQ = questions[currentQuestionIndex];
-  const studentAns = submission.answers?.find(a => a.questionId === currentQ.id);
+  const studentAns = submission.answers?.find(
+    a => a.questionId === currentQ.id,
+  );
   const totalQuestions = questions.length;
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
           <Icon name="chevron-left" size={18} color="#2C3E50" />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
@@ -230,10 +302,11 @@ export default function GradeAssessmentScreen() {
           style={[
             styles.gpsBar,
             submission.isValidLocation ? styles.gpsValid : styles.gpsInvalid,
-          ]}
-        >
+          ]}>
           <Icon
-            name={submission.isValidLocation ? 'check-circle' : 'exclamation-circle'}
+            name={
+              submission.isValidLocation ? 'check-circle' : 'exclamation-circle'
+            }
             size={14}
             color={submission.isValidLocation ? '#155724' : '#721C24'}
           />
@@ -241,19 +314,39 @@ export default function GradeAssessmentScreen() {
             style={[
               styles.gpsText,
               {color: submission.isValidLocation ? '#155724' : '#721C24'},
-            ]}
-          >
+            ]}>
             {submission.isValidLocation
-              ? `Vị trí nộp bài hợp lệ (${submission.calculatedDistance?.toFixed(1)}m từ lớp)`
+              ? `Vị trí nộp bài hợp lệ (${submission.calculatedDistance?.toFixed(
+                  1,
+                )}m từ lớp)`
               : submission.mockLocationDetected
               ? 'Phát hiện thiết bị sử dụng định vị giả (FAKE GPS)!'
-              : `Nộp bài sai vị trí lớp học (Khoảng cách: ${submission.calculatedDistance?.toFixed(1)}m)`}
+              : `Nộp bài sai vị trí lớp học (Khoảng cách: ${submission.calculatedDistance?.toFixed(
+                  1,
+                )}m)`}
           </Text>
         </View>
       )}
 
       {/* Main Grading Panel */}
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}>
+        {/* AI Proctoring Logs Button */}
+        {assessment.isCameraRequired && (
+          <TouchableOpacity
+            style={styles.proctorButton}
+            onPress={handleOpenProctorLogs}>
+            <Icon
+              name="shield"
+              size={16}
+              color="#FFFFFF"
+              style={{marginRight: 8}}
+            />
+            <Text style={styles.proctorButtonText}>NHẬT KÝ AI GIÁM THỊ</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Progress Grid Selector */}
         <View style={styles.qSelectorContainer}>
           <Text style={styles.sectionTitle}>Sơ đồ câu hỏi</Text>
@@ -262,7 +355,7 @@ export default function GradeAssessmentScreen() {
               const isCurrent = idx === currentQuestionIndex;
               const hasGrades = questionGrades[q.id]?.score !== '';
               const isEssay = q.type === 'ESSAY';
-              
+
               return (
                 <TouchableOpacity
                   key={q.id}
@@ -273,15 +366,13 @@ export default function GradeAssessmentScreen() {
                     isEssay && !hasGrades && styles.gridItemEssayPending,
                     isEssay && hasGrades && styles.gridItemEssayGraded,
                   ]}
-                  onPress={() => setCurrentQuestionIndex(idx)}
-                >
+                  onPress={() => setCurrentQuestionIndex(idx)}>
                   <Text
                     style={[
                       styles.gridItemText,
                       isCurrent && styles.gridItemTextCurrent,
                       (hasGrades || isEssay) && styles.gridItemTextActive,
-                    ]}
-                  >
+                    ]}>
                     {idx + 1}
                   </Text>
                 </TouchableOpacity>
@@ -293,7 +384,9 @@ export default function GradeAssessmentScreen() {
         {/* Current Question Block */}
         <View style={styles.questionCard}>
           <View style={styles.cardHeader}>
-            <Text style={styles.qNumberLabel}>Câu hỏi {currentQuestionIndex + 1}</Text>
+            <Text style={styles.qNumberLabel}>
+              Câu hỏi {currentQuestionIndex + 1}
+            </Text>
             <Text style={styles.qScoreLabel}>Mức điểm: {currentQ.score}đ</Text>
           </View>
           <Text style={styles.qContent}>{currentQ.content}</Text>
@@ -307,29 +400,28 @@ export default function GradeAssessmentScreen() {
                   <View style={styles.refContainer}>
                     <Text style={styles.refLabel}>Đáp án đúng hệ thống:</Text>
                     {meta.choices?.map(c => {
-                      const isCorrect = c.key?.toLowerCase() === meta.correct_choice?.toLowerCase();
+                      const isCorrect =
+                        c.key?.toLowerCase() ===
+                        meta.correct_choice?.toLowerCase();
                       return (
                         <View
                           key={c.key}
                           style={[
                             styles.choiceRow,
                             isCorrect && styles.choiceCorrect,
-                          ]}
-                        >
+                          ]}>
                           <Text
                             style={[
                               styles.choiceKey,
                               isCorrect && styles.choiceTextCorrect,
-                            ]}
-                          >
+                            ]}>
                             {c.key}.
                           </Text>
                           <Text
                             style={[
                               styles.choiceText,
                               isCorrect && styles.choiceTextCorrect,
-                            ]}
-                          >
+                            ]}>
                             {c.text}
                           </Text>
                         </View>
@@ -356,8 +448,11 @@ export default function GradeAssessmentScreen() {
         {/* Student Response Block */}
         <View style={styles.studentAnswerCard}>
           <Text style={styles.sectionTitle}>Bài làm của sinh viên</Text>
-          {!studentAns || (!studentAns.selectedChoice && !studentAns.answerText) ? (
-            <Text style={styles.noAnswerText}>Sinh viên bỏ trống câu hỏi này.</Text>
+          {!studentAns ||
+          (!studentAns.selectedChoice && !studentAns.answerText) ? (
+            <Text style={styles.noAnswerText}>
+              Sinh viên bỏ trống câu hỏi này.
+            </Text>
           ) : currentQ.type === 'MULTIPLE_CHOICE' ? (
             <View style={styles.studentChoiceContainer}>
               <Text style={styles.responseLabel}>Lựa chọn đã chọn:</Text>
@@ -373,7 +468,9 @@ export default function GradeAssessmentScreen() {
                       const meta = JSON.parse(currentQ.metadata || '{}');
                       return (
                         meta.choices?.find(
-                          c => c.key?.toLowerCase() === studentAns.selectedChoice?.toLowerCase()
+                          c =>
+                            c.key?.toLowerCase() ===
+                            studentAns.selectedChoice?.toLowerCase(),
                         )?.text || ''
                       );
                     } catch (e) {
@@ -386,7 +483,9 @@ export default function GradeAssessmentScreen() {
           ) : (
             <View style={styles.essayResponseContainer}>
               <Text style={styles.responseLabel}>Lời giải chi tiết:</Text>
-              <Text style={styles.essayResponseText}>{studentAns.answerText}</Text>
+              <Text style={styles.essayResponseText}>
+                {studentAns.answerText}
+              </Text>
             </View>
           )}
         </View>
@@ -402,14 +501,20 @@ export default function GradeAssessmentScreen() {
                 keyboardType="numeric"
                 placeholder="0.0"
                 value={questionGrades[currentQ.id]?.score}
-                onChangeText={val => handleScoreChange(currentQ.id, currentQ.score, val)}
+                onChangeText={val =>
+                  handleScoreChange(currentQ.id, currentQ.score, val)
+                }
               />
-              <Text style={styles.maxScoreLabelSuffix}>/ {currentQ.score}đ</Text>
+              <Text style={styles.maxScoreLabelSuffix}>
+                / {currentQ.score}đ
+              </Text>
             </View>
           </View>
 
           <View style={styles.commentInputContainer}>
-            <Text style={styles.commentInputLabel}>Nhận xét riêng cho câu này:</Text>
+            <Text style={styles.commentInputLabel}>
+              Nhận xét riêng cho câu này:
+            </Text>
             <TextInput
               style={styles.commentInput}
               placeholder="Nhập lời nhận xét, góp ý cho đáp án..."
@@ -439,12 +544,22 @@ export default function GradeAssessmentScreen() {
       <View style={styles.footer}>
         <View style={styles.navRow}>
           <TouchableOpacity
-            style={[styles.navButton, currentQuestionIndex === 0 && styles.navButtonDisabled]}
+            style={[
+              styles.navButton,
+              currentQuestionIndex === 0 && styles.navButtonDisabled,
+            ]}
             disabled={currentQuestionIndex === 0}
-            onPress={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
-          >
-            <Icon name="arrow-left" size={14} color={currentQuestionIndex === 0 ? '#CBD5E1' : '#475569'} />
-            <Text style={[styles.navButtonText, currentQuestionIndex === 0 && styles.navButtonTextDisabled]}>
+            onPress={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}>
+            <Icon
+              name="arrow-left"
+              size={14}
+              color={currentQuestionIndex === 0 ? '#CBD5E1' : '#475569'}
+            />
+            <Text
+              style={[
+                styles.navButtonText,
+                currentQuestionIndex === 0 && styles.navButtonTextDisabled,
+              ]}>
               Trước đó
             </Text>
           </TouchableOpacity>
@@ -452,38 +567,159 @@ export default function GradeAssessmentScreen() {
           <TouchableOpacity
             style={[
               styles.navButton,
-              currentQuestionIndex === totalQuestions - 1 && styles.navButtonDisabled,
+              currentQuestionIndex === totalQuestions - 1 &&
+                styles.navButtonDisabled,
             ]}
             disabled={currentQuestionIndex === totalQuestions - 1}
-            onPress={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
-          >
+            onPress={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}>
             <Text
               style={[
                 styles.navButtonText,
-                currentQuestionIndex === totalQuestions - 1 && styles.navButtonTextDisabled,
-              ]}
-            >
+                currentQuestionIndex === totalQuestions - 1 &&
+                  styles.navButtonTextDisabled,
+              ]}>
               Tiếp theo
             </Text>
-            <Icon name="arrow-right" size={14} color={currentQuestionIndex === totalQuestions - 1 ? '#CBD5E1' : '#475569'} />
+            <Icon
+              name="arrow-right"
+              size={14}
+              color={
+                currentQuestionIndex === totalQuestions - 1
+                  ? '#CBD5E1'
+                  : '#475569'
+              }
+            />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          style={[
+            styles.submitButton,
+            isSubmitting && styles.submitButtonDisabled,
+          ]}
           disabled={isSubmitting}
-          onPress={handleSubmitGrades}
-        >
+          onPress={handleSubmitGrades}>
           {isSubmitting ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
-              <Icon name="check-square-o" size={16} color="#FFFFFF" style={{marginRight: 8}} />
+              <Icon
+                name="check-square-o"
+                size={16}
+                color="#FFFFFF"
+                style={{marginRight: 8}}
+              />
               <Text style={styles.submitButtonText}>Hoàn Thành Chấm Điểm</Text>
             </>
           )}
         </TouchableOpacity>
       </View>
+
+      {/* AI Proctoring logs modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isProctorLogsOpen}
+        onRequestClose={() => setIsProctorLogsOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderTitleContainer}>
+                <View style={styles.modalIconBadge}>
+                  <Icon name="shield" size={16} color="#BE123C" />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text style={styles.modalTitle} numberOfLines={1}>
+                    Nhật ký AI Giám thị
+                  </Text>
+                  <Text style={styles.modalSubtitle} numberOfLines={1}>
+                    Thí sinh: {studentName}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setIsProctorLogsOpen(false)}>
+                <Icon name="close" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Modal Body */}
+            {isProctorLogsLoading ? (
+              <View style={styles.modalCenterContainer}>
+                <ActivityIndicator size="large" color="#BE123C" />
+                <Text style={styles.modalLoadingText}>
+                  Đang tải nhật ký vi phạm...
+                </Text>
+              </View>
+            ) : proctorLogs.length === 0 ? (
+              <View style={styles.modalCenterContainer}>
+                <View style={styles.modalSuccessBadge}>
+                  <Icon name="check-circle" size={40} color="#10B981" />
+                </View>
+                <Text style={styles.modalSuccessTitle}>
+                  Không phát hiện vi phạm
+                </Text>
+                <Text style={styles.modalSuccessText}>
+                  AI không phát hiện bất kỳ dấu hiệu vi phạm quy chế nào của thí
+                  sinh này.
+                </Text>
+              </View>
+            ) : (
+              <ScrollView style={styles.modalLogsList}>
+                <Text style={styles.modalListHeader}>
+                  Phát hiện ({proctorLogs.length} lần nghi vấn):
+                </Text>
+                {proctorLogs.map((log, index) => {
+                  const formatTimestamp = ts => {
+                    if (!ts || ts.length < 15) {
+                      return ts;
+                    }
+                    const year = ts.substring(0, 4);
+                    const month = ts.substring(4, 6);
+                    const day = ts.substring(6, 8);
+                    const hour = ts.substring(9, 11);
+                    const min = ts.substring(11, 13);
+                    const sec = ts.substring(13, 15);
+                    return `${hour}:${min}:${sec} - ${day}/${month}/${year}`;
+                  };
+
+                  return (
+                    <View key={index} style={styles.logCard}>
+                      <View style={styles.logCardHeader}>
+                        <Text style={styles.logCardNumber}>
+                          LẦN {proctorLogs.length - index}
+                        </Text>
+                        <Text style={styles.logCardTime}>
+                          {formatTimestamp(log.timestamp)}
+                        </Text>
+                      </View>
+                      <Text style={styles.logCardDetails}>{log.details}</Text>
+
+                      {log.videoUrl && (
+                        <TouchableOpacity
+                          style={styles.logPlayButton}
+                          onPress={() => playViolationVideo(log.videoUrl)}>
+                          <Icon
+                            name="play-circle"
+                            size={16}
+                            color="#BE123C"
+                            style={{marginRight: 6}}
+                          />
+                          <Text style={styles.logPlayButtonText}>
+                            Xem Video Bằng Chứng
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -492,6 +728,168 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  proctorButton: {
+    backgroundColor: '#BE123C',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  proctorButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    minHeight: '65%',
+    maxHeight: '85%',
+    paddingBottom: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modalHeaderTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  modalIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFE4E6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0F172A',
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  modalCloseButton: {
+    padding: 6,
+  },
+  modalCenterContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 48,
+  },
+  modalLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  modalSuccessBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: '#ECFDF5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalSuccessTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0F172A',
+    marginBottom: 8,
+  },
+  modalSuccessText: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  modalLogsList: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  modalListHeader: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  logCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 12,
+  },
+  logCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  logCardNumber: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#BE123C',
+    backgroundColor: '#FFE4E6',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  logCardTime: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  logCardDetails: {
+    fontSize: 13,
+    color: '#334155',
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  logPlayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  logPlayButtonText: {
+    fontSize: 12,
+    color: '#BE123C',
+    fontWeight: 'bold',
   },
   centerContainer: {
     flex: 1,
