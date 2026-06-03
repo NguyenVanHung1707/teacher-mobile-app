@@ -163,7 +163,7 @@ export default function PhotoAttendanceScreen() {
           return response.json();
         })
         .then(async (result) => {
-          const matchedIds = result
+          const matchedIds = (result.attendance || [])
             .filter(r => r.isAttendance === true || r.isAttendance === 'true')
             .map(r => r.id);
 

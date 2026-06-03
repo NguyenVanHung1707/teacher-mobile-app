@@ -56,6 +56,27 @@ const ProfileScreen = () => {
     fetchProfile();
   }, []);
 
+  const handleLogout = async () => {
+    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', [
+      {text: 'Hủy', style: 'cancel'},
+      {
+        text: 'Đăng xuất',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await AsyncStorage.removeItem('accessToken');
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'Login'}],
+            });
+          } catch (e) {
+            console.error('Error logging out:', e);
+          }
+        },
+      },
+    ]);
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.center, {backgroundColor: colors.bg}]}>
@@ -120,6 +141,14 @@ const ProfileScreen = () => {
           >
             <Icon name="key" size={14} color="#FFF" style={styles.btnIcon} />
             <Text style={styles.changePasswordBtnText}>ĐỔI MẬT KHẨU TÀI KHOẢN</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.logoutBtn, {borderColor: colors.border}]}
+            onPress={handleLogout}
+          >
+            <Icon name="sign-out" size={14} color="#EF4444" style={styles.btnIcon} />
+            <Text style={styles.logoutBtnText}>ĐĂNG XUẤT TÀI KHOẢN</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -257,6 +286,22 @@ const styles = StyleSheet.create({
   },
   changePasswordBtnText: {
     color: '#FFF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 10,
+    gap: 8,
+    borderWidth: 1.5,
+  },
+  logoutBtnText: {
+    color: '#EF4444',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,

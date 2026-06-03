@@ -121,7 +121,7 @@ const ImageModal = ({visible, onClose, studentList}) => {
           console.log('FastAPI Recognition result:', result);
           
           // Filter recognized student IDs (isAttendance === true or equivalent from Python response)
-          const matchedIds = result
+          const matchedIds = (result.attendance || [])
             .filter(r => r.isAttendance === true || r.isAttendance === 'true')
             .map(r => r.id);
 
