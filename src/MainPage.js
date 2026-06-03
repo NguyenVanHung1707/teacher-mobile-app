@@ -16,6 +16,8 @@ import TimetableScreen from './classManagement/TimetableScreen'; // Import Timet
 import GradeSubmissionsListScreen from './classManagement/GradeSubmissionsListScreen';
 import GradeAssessmentScreen from './classManagement/GradeAssessmentScreen';
 import CreateAssessmentScreen from './classManagement/CreateAssessmentScreen';
+import PhotoAttendanceScreen from './PhotoAttendanceScreen'; // Import PhotoAttendanceScreen
+import CreateFormSelectClassScreen from './classManagement/CreateFormSelectClassScreen'; // Import CreateFormSelectClassScreen
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -76,6 +78,28 @@ const ClassManagementStack = () => {
   );
 };
 
+const CreateFormStack = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="CreateFormSelectClass"
+        component={CreateFormSelectClassScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AddFormScreen"
+        component={AddFormScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CreateAssessment"
+        component={CreateAssessmentScreen}
+        options={{headerShown: false}}
+      />
+    </Stack.Navigator>
+  );
+};
+
 export default function MainPage() {
   const isDark = useColorScheme() === 'dark';
   const theme = getThemeColors(isDark);
@@ -86,13 +110,17 @@ export default function MainPage() {
         tabBarIcon: ({focused, color, size}) => {
           let iconName;
 
-          if (route.name === 'Dashboard') {
-            iconName = 'qrcode';
-          } else if (route.name === 'Lớp học') {
+          if (route.name === 'Bảng thống kê') {
+            iconName = 'dashboard';
+          } else if (route.name === 'Quản lý lớp học') {
             iconName = 'university';
-          } else if (route.name === 'Lịch dạy') {
+          } else if (route.name === 'Thời khóa biểu') {
             iconName = 'calendar';
-          } else if (route.name === 'Hồ sơ') {
+          } else if (route.name === 'Chụp ảnh điểm danh') {
+            iconName = 'camera';
+          } else if (route.name === 'Tạo Form điểm danh') {
+            iconName = 'check-square-o';
+          } else if (route.name === 'Thông tin cá nhân') {
             iconName = 'user';
           }
 
@@ -102,15 +130,16 @@ export default function MainPage() {
         tabBarInactiveTintColor: theme.textSecondary,
         tabBarLabelStyle: {
           fontWeight: '700',
-          fontSize: 11,
-          paddingBottom: 4,
+          fontSize: 9.5,
+          paddingBottom: 6,
         },
         tabBarStyle: {
           backgroundColor: theme.card,
           borderTopWidth: 1,
           borderTopColor: theme.border,
-          height: 62,
-          paddingTop: 6,
+          height: 68,
+          paddingTop: 8,
+          paddingBottom: 4,
           elevation: 10,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: -3},
@@ -134,10 +163,12 @@ export default function MainPage() {
           letterSpacing: 0.5,
         },
       })}>
-      <Tab.Screen name="Dashboard" component={HomeScreen} />
-      <Tab.Screen name="Lớp học" component={ClassManagementStack} />
-      <Tab.Screen name="Lịch dạy" component={TimetableScreen} options={{headerShown: false}} />
-      <Tab.Screen name="Hồ sơ" component={ProfileScreen} />
+      <Tab.Screen name="Bảng thống kê" component={HomeScreen} />
+      <Tab.Screen name="Quản lý lớp học" component={ClassManagementStack} />
+      <Tab.Screen name="Thời khóa biểu" component={TimetableScreen} options={{headerShown: false}} />
+      <Tab.Screen name="Chụp ảnh điểm danh" component={PhotoAttendanceScreen} options={{headerShown: false}} />
+      <Tab.Screen name="Tạo Form điểm danh" component={CreateFormStack} options={{headerShown: false}} />
+      <Tab.Screen name="Thông tin cá nhân" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

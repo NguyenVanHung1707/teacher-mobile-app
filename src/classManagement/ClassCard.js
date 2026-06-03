@@ -80,8 +80,35 @@ export default function ClassCard(props) {
         )}
         
         <View style={styles.footerRow}>
-          <Text style={[styles.enterText, {color: accentColor}]}>Quản lý lớp học</Text>
-          <Icon name="chevron-right" size={10} color={accentColor} style={styles.chevron} />
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity 
+              style={[styles.actionIconBtn, {backgroundColor: theme.bgSecondary}]}
+              onPress={(e) => {
+                e.stopPropagation();
+                if (props.onEdit) props.onEdit(classInfo);
+              }}
+              activeOpacity={0.7}
+            >
+              <Icon name="pencil" size={11} color={theme.accent || '#3498DB'} />
+              <Text style={[styles.actionBtnText, {color: theme.accent || '#3498DB', marginLeft: 4}]}>Sửa</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.actionIconBtn, {backgroundColor: theme.bgSecondary, marginLeft: 10}]}
+              onPress={(e) => {
+                e.stopPropagation();
+                if (props.onDelete) props.onDelete(classInfo);
+              }}
+              activeOpacity={0.7}
+            >
+              <Icon name="trash" size={11} color="#EF4444" />
+              <Text style={[styles.actionBtnText, {color: '#EF4444', marginLeft: 4}]}>Xóa</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.enterContainer}>
+            <Text style={[styles.enterText, {color: accentColor}]}>Quản lý lớp học</Text>
+            <Icon name="chevron-right" size={10} color={accentColor} style={styles.chevron} />
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -151,11 +178,30 @@ const styles = StyleSheet.create({
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     borderTopWidth: 0.5,
     borderTopColor: '#F1F5F9',
     paddingTop: 10,
     marginTop: 4,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIconBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  actionBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  enterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   enterText: {
     fontSize: 12,

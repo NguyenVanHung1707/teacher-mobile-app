@@ -327,16 +327,16 @@ export default function TimetableScreen() {
                   <Text
                     style={[
                       styles.dayChipLabel,
-                      isSelected && styles.dayChipLabelActive,
                       isToday && styles.dayChipLabelToday,
+                      isSelected && styles.dayChipLabelActive,
                     ]}>
                     {day.label}
                   </Text>
                   <Text
                     style={[
                       styles.dayChipDate,
-                      isSelected && styles.dayChipDateActive,
                       isToday && styles.dayChipDateToday,
+                      isSelected && styles.dayChipDateActive,
                     ]}>
                     {formattedDate}
                   </Text>

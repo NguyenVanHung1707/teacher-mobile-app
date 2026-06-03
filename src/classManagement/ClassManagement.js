@@ -1,10 +1,12 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {View, Text, FlatList, TouchableOpacity, StyleSheet, useColorScheme, ActivityIndicator} from 'react-native';
+import {View, Text, FlatList, TouchableOpacity, StyleSheet, useColorScheme, ActivityIndicator, Alert} from 'react-native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {API_URL} from '@env';
 import ClassCard from './ClassCard';
 import AddClassModal from './forms/AddClassModal';
+import EditClassModal from './forms/EditClassModal';
+import ConfirmDeleteModal from './forms/ConfirmDeleteModal';
 import {getData, getThemeColors} from '../Utility';
 import {useFocusEffect} from '@react-navigation/native';
 
@@ -13,8 +15,80 @@ export default function ClassManagement() {
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Edit / Delete Class States
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+
   const isDark = useColorScheme() === 'dark';
   const theme = getThemeColors(isDark);
+
+  const handleOpenEdit = (classInfo) => {
+    setSelectedClass(classInfo);
+    setEditModalVisible(true);
+  };
+
+  const handleOpenDelete = (classInfo) => {
+    setSelectedClass(classInfo);
+    setDeleteModalVisible(true);
+  };
+
+  const handleEditClass = async (courseCode, subject, description) => {
+    if (!selectedClass) return;
+    let data = JSON.stringify({
+      courseCode: courseCode,
+      subject: subject,
+      description: description,
+    });
+
+    let config = {
+      method: 'put',
+      maxBodyLength: Infinity,
+      url: `${API_URL}/teacher/update-course?courseId=${selectedClass.id}`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + (await getData('accessToken')),
+      },
+      data: data,
+    };
+
+    axios
+      .request(config)
+      .then(response => {
+        if (response.status === 200) {
+          fetchData(); // Reload the class list after editing
+          Alert.alert('Thành công', 'Cập nhật lớp học thành công');
+        }
+      })
+      .catch(error => {
+        console.log(error);
+        Alert.alert('Thất bại', 'Không thể cập nhật lớp học');
+      });
+    setEditModalVisible(false);
+  };
+
+  const handleDeleteClass = async () => {
+    if (!selectedClass) return;
+    let config = {
+      method: 'delete',
+      url: `${API_URL}/teacher/delete-course?courseId=${selectedClass.id}`,
+      headers: {
+        Authorization: 'Bearer ' + (await getData('accessToken')),
+      },
+    };
+
+    axios
+      .request(config)
+      .then(response => {
+        fetchData(); // Reload the class list after deleting
+        Alert.alert('Thành công', `Đã xóa lớp học ${selectedClass.courseCode}`);
+      })
+      .catch(error => {
+        console.log(error);
+        Alert.alert('Thất bại', 'Không thể xóa lớp học');
+      });
+    setDeleteModalVisible(false);
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -116,7 +190,7 @@ export default function ClassManagement() {
         ) : (
           <FlatList
             data={classes}
-            renderItem={({item}) => <ClassCard classInfo={item} />}
+            renderItem={({item}) => <ClassCard classInfo={item} onEdit={handleOpenEdit} onDelete={handleOpenDelete} />}
             keyExtractor={item => item.id.toString()}
             contentContainerStyle={styles.flatListContent}
             showsVerticalScrollIndicator={false}
@@ -129,6 +203,19 @@ export default function ClassManagement() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSubmit={handleAddClass}
+      />
+      <EditClassModal
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        onSubmit={handleEditClass}
+        currentCourseCode={selectedClass?.courseCode}
+        currentSubject={selectedClass?.subject}
+        currentDescription={selectedClass?.description}
+      />
+      <ConfirmDeleteModal
+        visible={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
+        onConfirm={handleDeleteClass}
       />
     </View>
   );
